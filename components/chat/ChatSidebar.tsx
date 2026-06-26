@@ -10,19 +10,21 @@ import {
   X,
   PanelLeftClose,
   PanelLeftOpen,
-  Github,
+  Settings,
 } from "lucide-react";
 import { useSpark } from "@/lib/store";
 import { cn, formatRelativeTime } from "@/lib/utils";
+import { APP_VERSION } from "@/lib/version";
 import { SparkWordmark } from "../SparkLogo";
 import { ThemeToggle } from "../ThemeToggle";
 
 interface Props {
   collapsed: boolean;
   onToggle: () => void;
+  onOpenSettings: () => void;
 }
 
-export function ChatSidebar({ collapsed, onToggle }: Props) {
+export function ChatSidebar({ collapsed, onToggle, onOpenSettings }: Props) {
   const conversations = useSpark((s) => s.conversations);
   const activeId = useSpark((s) => s.activeId);
   const newConversation = useSpark((s) => s.newConversation);
@@ -63,6 +65,15 @@ export function ChatSidebar({ collapsed, onToggle }: Props) {
         >
           <Plus size={18} />
         </button>
+        <div className="mt-auto">
+          <button
+            onClick={onOpenSettings}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-400 hover:bg-cream-200 dark:hover:bg-ink-600 hover:text-ink-700 dark:hover:text-ink-100 transition-colors"
+            aria-label="Open settings"
+          >
+            <Settings size={18} />
+          </button>
+        </div>
       </aside>
     );
   }
@@ -202,18 +213,16 @@ export function ChatSidebar({ collapsed, onToggle }: Props) {
       <div className="border-t border-cream-300 dark:border-ink-500 px-3 py-3">
         <div className="flex items-center justify-between">
           <ThemeToggle />
-          <a
-            href="https://github.com/deepseek-ai"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-400 hover:text-ink-700 dark:hover:text-ink-100"
-            aria-label="GitHub"
+          <button
+            onClick={onOpenSettings}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-400 hover:bg-cream-200 dark:hover:bg-ink-600 hover:text-ink-700 dark:hover:text-ink-100 transition-colors"
+            aria-label="Open settings"
           >
-            <Github size={14} />
-          </a>
+            <Settings size={14} />
+          </button>
         </div>
         <p className="mt-2 text-[10px] text-ink-400">
-          Powered by DeepSeek · v0.1
+          Powered by DeepSeek · v{APP_VERSION}
         </p>
       </div>
     </aside>

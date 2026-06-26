@@ -13,6 +13,14 @@ interface SparkState {
   theme: "light" | "dark" | "system";
   hydrated: boolean;
 
+  // BYOK settings — the real key lives in the encrypted keystore (lib/keystore).
+  // We persist only a presence flag + base URL override so the UI can render
+  // synchronously on mount without awaiting WebCrypto.
+  hasApiKey: boolean;
+  baseUrl: string;
+  /** When set, the chat UI shows the welcome / API-key entry screen. */
+  needsOnboarding: boolean;
+
   // selectors
   getActive: () => Conversation | undefined;
 
@@ -41,6 +49,10 @@ interface SparkState {
 
   setModel: (m: ModelId) => void;
   setTheme: (t: "light" | "dark" | "system") => void;
+
+  setHasApiKey: (v: boolean) => void;
+  setBaseUrl: (v: string) => void;
+  setNeedsOnboarding: (v: boolean) => void;
 }
 
 function makeConversation(model: ModelId): Conversation {
@@ -63,6 +75,10 @@ export const useSpark = create<SparkState>()(
       model: "deepseek-chat",
       theme: "system",
       hydrated: false,
+
+      hasApiKey: false,
+      baseUrl: "https://api.deepseek.com/v1",
+      needsOnboarding: false,
 
       getActive: () => {
         const { conversations, activeId } = get();
@@ -177,6 +193,10 @@ export const useSpark = create<SparkState>()(
 
       setModel: (m) => set({ model: m }),
       setTheme: (t) => set({ theme: t }),
+
+      setHasApiKey: (v) => set({ hasApiKey: v }),
+      setBaseUrl: (v) => set({ baseUrl: v }),
+      setNeedsOnboarding: (v) => set({ needsOnboarding: v }),
     }),
     {
       name: "spark-store",
@@ -186,6 +206,8 @@ export const useSpark = create<SparkState>()(
         activeId: s.activeId,
         model: s.model,
         theme: s.theme,
+        hasApiKey: s.hasApiKey,
+        baseUrl: s.baseUrl,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();

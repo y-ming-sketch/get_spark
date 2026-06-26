@@ -6,27 +6,45 @@ interface ChatRequestBody {
   model: "deepseek-chat" | "deepseek-reasoner";
   messages: { role: "system" | "user" | "assistant"; content: string }[];
   temperature?: number;
+  /** Optional BYOK base URL override sent by the client. */
+  baseUrl?: string;
 }
 
-const DEEPSEEK_URL =
-  process.env.DEEPSEEK_API_URL || "https://api.deepseek.com/v1";
+const DEFAULT_BASE_URL = "https://api.deepseek.com/v1";
 
-/**
- * Encodes one SSE `data:` event line.
- * Each event is terminated with a blank line per the SSE spec.
- */
 function sseEvent(payload: unknown): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify(payload)}\n\n`);
 }
 
+function jsonError(status: number, message: string): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
+  // ────────────────────────────────────────────────────────────────────────
+  // Key resolution (BYOK-first)
+  // ────────────────────────────────────────────────────────────────────────
+  //
+  // 1. Authorization: Bearer <user-supplied-key>   ← BYOK on web/PWA
+  // 2. DEEPSEEK_API_KEY env var                    ← legacy server-side mode
+  //
+  // The user-supplied key is forwarded straight to DeepSeek and never logged,
+  // stored, or echoed back. We don't keep it across requests.
+  let apiKey: string | undefined;
+  const auth = req.headers.get("authorization");
+  if (auth && auth.toLowerCase().startsWith("bearer ")) {
+    apiKey = auth.slice(7).trim();
+  } else if (process.env.DEEPSEEK_API_KEY) {
+    apiKey = process.env.DEEPSEEK_API_KEY;
+  }
+
   if (!apiKey) {
-    return new Response(
-      JSON.stringify({
-        error: "DEEPSEEK_API_KEY is not configured on the server.",
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } },
+    return jsonError(
+      401,
+      "Missing API key. Open Settings and paste your DeepSeek API key, or set DEEPSEEK_API_KEY on the server.",
     );
   }
 
@@ -34,21 +52,16 @@ export async function POST(req: NextRequest) {
   try {
     body = (await req.json()) as ChatRequestBody;
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonError(400, "Invalid JSON body");
   }
 
   if (!body.messages?.length) {
-    return new Response(JSON.stringify({ error: "messages is required" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonError(400, "messages is required");
   }
 
-  // Call DeepSeek with streaming enabled
-  const upstream = await fetch(`${DEEPSEEK_URL}/chat/completions`, {
+  const baseUrl = (body.baseUrl || process.env.DEEPSEEK_API_URL || DEFAULT_BASE_URL).replace(/\/+$/, "");
+
+  const upstream = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -64,15 +77,12 @@ export async function POST(req: NextRequest) {
 
   if (!upstream.ok || !upstream.body) {
     const text = await upstream.text().catch(() => "");
-    return new Response(
-      JSON.stringify({
-        error: `DeepSeek API error (${upstream.status}): ${text || upstream.statusText}`,
-      }),
-      { status: upstream.status, headers: { "Content-Type": "application/json" } },
+    return jsonError(
+      upstream.status,
+      `DeepSeek API error (${upstream.status}): ${text || upstream.statusText}`,
     );
   }
 
-  // Re-stream upstream tokens as our own SSE protocol
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const reader = upstream.body!.getReader();

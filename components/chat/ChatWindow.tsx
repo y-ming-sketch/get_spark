@@ -11,6 +11,11 @@ import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
 import { ModelSelector } from "./ModelSelector";
 import { SparkLogo } from "../SparkLogo";
+import { Welcome } from "../Welcome";
+
+interface ChatWindowProps {
+  onOpenSettings: () => void;
+}
 
 const SUGGESTIONS = [
   {
@@ -35,11 +40,13 @@ const SUGGESTIONS = [
   },
 ];
 
-export function ChatWindow() {
+export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
   const hydrated = useSpark((s) => s.hydrated);
   const active = useSpark((s) => s.getActive());
   const activeId = useSpark((s) => s.activeId);
   const model = useSpark((s) => s.model);
+  const hasApiKey = useSpark((s) => s.hasApiKey);
+  const needsOnboarding = useSpark((s) => s.needsOnboarding);
   const newConversation = useSpark((s) => s.newConversation);
   const addMessage = useSpark((s) => s.addMessage);
   const appendToMessage = useSpark((s) => s.appendToMessage);
@@ -183,6 +190,15 @@ export function ChatWindow() {
     return (
       <div className="flex flex-1 items-center justify-center">
         <SparkLogo size={28} className="text-spark-500 animate-pulse" />
+      </div>
+    );
+  }
+
+  // First-launch / no-key state — gate the whole chat behind onboarding.
+  if (needsOnboarding && !hasApiKey) {
+    return (
+      <div className="flex flex-1 flex-col bg-cream-50 dark:bg-ink-800">
+        <Welcome onGetStarted={onOpenSettings} />
       </div>
     );
   }
