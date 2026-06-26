@@ -75,6 +75,7 @@
     "tabLanguage": "Language",
     "tabPrompt": "System prompt",
     "tabVoice": "Voice",
+    "tabConnections": "Connections",
     "tabAbout": "About"
   },
   "apiKey": {
@@ -186,5 +187,26 @@
     "languageHint": "Pick the language you'll dictate in. Defaults to the UI language.",
     "autoSpeak": "Auto-speak assistant replies",
     "autoSpeakHint": "When enabled, every assistant message is read aloud as it streams."
+  },
+  "connections": {
+    "githubTitle": "GitHub",
+    "githubDescription": "Connect a GitHub repo so Spark sees its file tree as context. Your token is encrypted on this device and only sent to api.github.com.",
+    "githubCreateToken": "Create a token with 'repo' scope",
+    "emptyError": "Please paste a token first.",
+    "errorFallback": "Couldn't reach GitHub.",
+    "save": "Save & test",
+    "saving": "Testing…",
+    "remove": "Remove",
+    "removeConfirm": "Remove your GitHub token from this device?",
+    "connectedAs": "Connected as @{login}.",
+    "tokenIsSet": "GitHub token is set on this device.",
+    "repoTitle": "Active repository",
+    "repoDescription": "Paste 'owner/name' or a github.com URL. Spark fetches the file tree once and includes it in the conversation context.",
+    "connectRepo": "Connect repo",
+    "connecting": "Loading…",
+    "disconnect": "Disconnect",
+    "repoOk": "Connected {fullName}.",
+    "repoFormat": "Repo must be in owner/name format.",
+    "currentlyConnected": "Currently connected to {fullName}."
   }
 }

@@ -14,6 +14,7 @@ import { MessageInput } from "./MessageInput";
 import { ModelSelector } from "./ModelSelector";
 import { SparkLogo } from "../SparkLogo";
 import { Welcome } from "../Welcome";
+import { RepoContextChip } from "../workspace/RepoContextChip";
 
 interface ChatWindowProps {
   onOpenSettings: () => void;
@@ -29,6 +30,7 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
   const model = useSpark((s) => s.model);
   const temperature = useSpark((s) => s.temperature);
   const customSystemPrompt = useSpark((s) => s.customSystemPrompt);
+  const activeRepo = useSpark((s) => s.activeRepo);
   const hasApiKey = useSpark((s) => s.hasApiKey);
   const needsOnboarding = useSpark((s) => s.needsOnboarding);
   const newConversation = useSpark((s) => s.newConversation);
@@ -155,7 +157,11 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
       const apiMessages = [
         {
           role: "system" as const,
-          content: buildSystemPrompt(locale, customSystemPrompt),
+          content: buildSystemPrompt(
+            locale,
+            customSystemPrompt,
+            activeRepo?.treeSummary,
+          ),
         },
         ...baseHistory.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
@@ -217,9 +223,12 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
   return (
     <div className="flex flex-1 flex-col bg-cream-50 dark:bg-ink-800">
       <header className="flex items-center justify-between border-b border-cream-300 dark:border-ink-500 px-4 py-2.5">
-        <h1 className="truncate text-sm font-medium">
-          {active?.title || t("newChat")}
-        </h1>
+        <div className="flex min-w-0 items-center gap-2">
+          <h1 className="truncate text-sm font-medium">
+            {active?.title || t("newChat")}
+          </h1>
+          <RepoContextChip onOpenSettings={onOpenSettings} />
+        </div>
         <ModelSelector />
       </header>
 

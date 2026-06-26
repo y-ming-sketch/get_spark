@@ -69,16 +69,23 @@ const LOCALE_LABELS: Record<string, string> = {
  * Compose the final system prompt for a chat turn. Appends a locale-reply
  * directive so the assistant matches the user's UI language by default,
  * but never forces it (the user can override mid-thread by asking).
+ *
+ * If `repoContext` is supplied (set when a GitHub repo is connected in
+ * Settings → Connections), the file-tree summary is appended so the
+ * assistant has workspace awareness without needing function calls yet.
  */
 export function buildSystemPrompt(
   locale: string,
   customPrompt?: string | null,
+  repoContext?: string | null,
 ): string {
   const base = (customPrompt ?? DEFAULT_SYSTEM_PROMPT).trim();
   const language = LOCALE_LABELS[locale] ?? "English";
-  return `${base}
-
-Reply in ${language} by default. Switch languages if the user asks or writes to you in a different language.`;
+  const replyDirective = `Reply in ${language} by default. Switch languages if the user asks or writes to you in a different language.`;
+  const repoBlock = repoContext
+    ? `\n\nWorkspace context:\n${repoContext}\n\nWhen the user references a file from this tree, you may quote its path. If you need the contents of a specific file the user hasn't pasted yet, ask them to attach it from the file picker.`
+    : "";
+  return `${base}\n\n${replyDirective}${repoBlock}`;
 }
 
 /** @deprecated use buildSystemPrompt(locale, customPrompt) instead. */
