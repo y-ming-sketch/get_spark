@@ -2,35 +2,73 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { PWAInstaller } from "@/components/PWAInstaller";
+import { APP_NAME, APP_VERSION } from "@/lib/version";
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
+  "https://get-spark.app";
+
+const DESCRIPTION =
+  "Spark is a local-first AI assistant for coding, SEO trends, and location-based fashion insights. Bring your own DeepSeek key — your prompts, history, and key never leave your device.";
+
+const TITLE = "Spark — Local-first AI for code, trends & style";
 
 export const metadata: Metadata = {
-  title: "Spark — AI for code, trends & style",
-  description:
-    "Spark is a serious AI assistant for coding, SEO trends, and location-based fashion insights. Powered by DeepSeek.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: TITLE,
+    template: "%s — Spark",
+  },
+  description: DESCRIPTION,
+  applicationName: APP_NAME,
+  authors: [{ name: "Spark" }],
   keywords: [
     "AI chat",
     "DeepSeek",
+    "local-first AI",
+    "BYOK",
     "coding assistant",
     "SEO trends",
     "fashion trends",
     "Spark AI",
+    "open source AI",
+    "privacy-first AI",
   ],
-  applicationName: "Spark",
-  authors: [{ name: "Spark" }],
+  category: "productivity",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Spark",
+    title: APP_NAME,
   },
   formatDetection: {
     telephone: false,
   },
+  alternates: {
+    canonical: SITE_URL,
+  },
   openGraph: {
-    title: "Spark — AI for code, trends & style",
-    description:
-      "Your AI for code, trends, and everything in between. Powered by DeepSeek.",
     type: "website",
+    siteName: APP_NAME,
+    title: TITLE,
+    description: DESCRIPTION,
+    url: SITE_URL,
+    locale: "en_US",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Spark — local-first AI for code, trends & style",
+        type: "image/png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ["/og-image.png"],
   },
   icons: {
     icon: [
@@ -39,6 +77,14 @@ export const metadata: Metadata = {
       { url: "/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
     ],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
   },
 };
 
@@ -51,6 +97,29 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
+};
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: APP_NAME,
+  applicationCategory: "ProductivityApplication",
+  operatingSystem: "Web, Windows, macOS, Linux",
+  description: DESCRIPTION,
+  softwareVersion: APP_VERSION,
+  url: SITE_URL,
+  image: `${SITE_URL}/og-image.png`,
+  license: "https://opensource.org/licenses/MIT",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  author: {
+    "@type": "Organization",
+    name: APP_NAME,
+    url: "https://github.com/y-ming-sketch/get_spark",
+  },
 };
 
 export default function RootLayout({
@@ -84,6 +153,11 @@ export default function RootLayout({
               })();
             `,
           }}
+        />
+        {/* Structured data for search engines */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
         />
       </head>
       <body className="antialiased">

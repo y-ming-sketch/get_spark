@@ -1,5 +1,11 @@
 # Spark ✨
 
+[![CI](https://github.com/y-ming-sketch/get_spark/actions/workflows/ci.yml/badge.svg)](https://github.com/y-ming-sketch/get_spark/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-spark.svg?color=8C1515)](./LICENSE)
+[![Version](https://img.shields.io/badge/version-0.2.1-FAF9F5.svg?color=8C1515)](./CHANGELOG.md)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-8C1515.svg)](./CONTRIBUTING.md)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fy-ming-sketch%2Fget_spark)
+
 > Your AI for code, trends, and everything in between.
 
 Spark is a **local-first** AI chat app powered by the **DeepSeek API**.
@@ -247,6 +253,39 @@ get_spark/
 The logo is a 4-point star symbolising **"a spark of insight."**
 
 ---
+
+## 🚢 Deploy (web / PWA)
+
+### One-click (recommended)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fy-ming-sketch%2Fget_spark)
+
+Vercel will pull the repo, run `next build`, and host it. No env vars are
+required for the BYOK flow — users paste their key in Settings on first
+launch. Optional: set `NEXT_PUBLIC_SITE_URL` to your custom domain so
+OpenGraph and Twitter cards point at the right place.
+
+### Self-host
+
+Any platform that supports Next.js 14 Edge runtime works (Cloudflare
+Pages, Netlify, AWS Amplify, Fly.io, your own VPS). Build with
+`npm run build` and serve with `npm run start`.
+
+### Native installers
+
+Tag a release as `v0.2.1` (or higher) and the
+[`release` workflow](./.github/workflows/release.yml) auto-builds signed
+installers for macOS (universal), Windows (x86_64), and Linux (x86_64)
+via `tauri-apps/tauri-action` and attaches them to a GitHub Release.
+Signing secrets (`APPLE_*`, `WINDOWS_CERTIFICATE_*`) are optional but
+recommended.
+
+---
+
+## 🛣️ Launch playbook
+
+See [LAUNCH.md](./LAUNCH.md) for the full Product Hunt + Show HN launch
+checklist, asset specs, and post-launch triage plan.
 
 ## 🛣️ Roadmap
 
