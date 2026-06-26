@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Spark — local-first AI chat",
   "short_name": "Spark",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "description": "Spark in your browser side panel. BYOK, encrypted locally, no telemetry. Right-click any selection and ask Spark.",
   "default_locale": "en",
   "icons": {

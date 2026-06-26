@@ -1,6 +1,6 @@
 [package]
 name = "spark"
-version = "0.2.1"
+version = "1.0.0"
 description = "Spark — AI chat for code, trends & style"
 authors = ["Spark"]
 edition = "2021"

@@ -1,6 +1,6 @@
 {
   "name": "spark-vscode",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "private": true,
   "displayName": "Spark — local-first AI chat",
   "description": "Spark in your editor. BYOK, encrypted locally, no telemetry. Bring your DeepSeek key and chat with workspace context.",
