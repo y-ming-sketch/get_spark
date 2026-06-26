@@ -5,11 +5,10 @@
  *
  *   Web / PWA           → POST /api/chat with Authorization: Bearer <key>
  *                          (Next.js Edge route proxies to DeepSeek)
+ *   Chrome extension    → fetch DeepSeek directly with the BYOK key
+ *                          (no Next.js server is available in MV3)
  *   Tauri desktop       → invoke('chat_stream', …) and listen for
  *                          `spark://chunk-<id>` events emitted by Rust
- *   Chrome extension    → same as web; key injected from chrome.storage
- *
- * Phase 1 ships the Web + Tauri paths. The extension path arrives in Phase 4.
  */
 import { readChatStream } from "./stream";
 import { keystore, SECRET_KEYS } from "./keystore";
@@ -40,6 +39,15 @@ export function isTauri(): boolean {
   return Boolean(w.__TAURI__ || w.__TAURI_INTERNALS__);
 }
 
+/** True when running inside a Chrome / Edge MV3 extension page. */
+export function isExtension(): boolean {
+  if (typeof globalThis === "undefined") return false;
+  const g = globalThis as unknown as {
+    chrome?: { runtime?: { id?: string } };
+  };
+  return Boolean(g.chrome?.runtime?.id);
+}
+
 async function resolveKey(supplied?: string): Promise<string | undefined> {
   if (supplied) return supplied;
   if (!keystore.available()) return undefined;
@@ -52,9 +60,11 @@ async function resolveBaseUrl(supplied?: string): Promise<string | undefined> {
   return (await keystore.get(SECRET_KEYS.DEEPSEEK_BASE_URL)) ?? undefined;
 }
 
-// ─── Web / PWA path ────────────────────────────────────────────────────────
+// ─── Web / PWA path (Next.js proxy) ────────────────────────────────────────
 
-async function* streamChatWeb(req: ChatRequest): AsyncGenerator<string, void, unknown> {
+async function* streamChatWeb(
+  req: ChatRequest,
+): AsyncGenerator<string, void, unknown> {
   const apiKey = await resolveKey(req.apiKey);
   const baseUrl = await resolveBaseUrl(req.baseUrl);
 
@@ -85,6 +95,76 @@ async function* streamChatWeb(req: ChatRequest): AsyncGenerator<string, void, un
   }
 }
 
+// ─── Direct DeepSeek path (Chrome extension; no server available) ──────────
+
+async function* streamChatDirect(
+  req: ChatRequest,
+): AsyncGenerator<string, void, unknown> {
+  const apiKey = await resolveKey(req.apiKey);
+  if (!apiKey) {
+    throw new Error(
+      "No API key set. Open Settings and paste your DeepSeek API key.",
+    );
+  }
+  const baseUrl =
+    (await resolveBaseUrl(req.baseUrl)) ?? "https://api.deepseek.com/v1";
+
+  const res = await fetch(`${baseUrl.replace(/\/+$/, "")}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: req.model,
+      messages: req.messages,
+      stream: true,
+      temperature: req.temperature ?? 0.7,
+    }),
+    signal: req.signal,
+  });
+
+  if (!res.ok || !res.body) {
+    const text = await res.text().catch(() => "");
+    throw new Error(
+      `DeepSeek API error (${res.status}): ${text.slice(0, 200) || res.statusText}`,
+    );
+  }
+
+  // DeepSeek's native SSE: lines start with `data: ` and end with `[DONE]`.
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) return;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const raw of lines) {
+        const line = raw.trim();
+        if (!line.startsWith("data:")) continue;
+        const data = line.slice(5).trim();
+        if (data === "[DONE]") return;
+        try {
+          const parsed = JSON.parse(data);
+          const delta =
+            parsed?.choices?.[0]?.delta?.content ??
+            parsed?.choices?.[0]?.delta?.reasoning_content ??
+            "";
+          if (delta) yield delta as string;
+        } catch {
+          // skip malformed chunk
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 // ─── Tauri desktop path ────────────────────────────────────────────────────
 
 interface TauriChunkEvent {
@@ -100,7 +180,9 @@ type QueueItem =
   | { type: "done" }
   | { type: "error"; message: string };
 
-async function* streamChatTauri(req: ChatRequest): AsyncGenerator<string, void, unknown> {
+async function* streamChatTauri(
+  req: ChatRequest,
+): AsyncGenerator<string, void, unknown> {
   const apiKey = await resolveKey(req.apiKey);
   if (!apiKey) {
     throw new Error(
@@ -110,7 +192,6 @@ async function* streamChatTauri(req: ChatRequest): AsyncGenerator<string, void, 
   const baseUrl =
     (await resolveBaseUrl(req.baseUrl)) ?? "https://api.deepseek.com/v1";
 
-  // Dynamic imports so the web bundle never tries to resolve these
   const { invoke } = await import("@tauri-apps/api/core");
   const { listen } = await import("@tauri-apps/api/event");
 
@@ -145,14 +226,10 @@ async function* streamChatTauri(req: ChatRequest): AsyncGenerator<string, void, 
   const onAbort = () => {
     queue.push({ type: "done" });
     wake();
-    // Best-effort cancel; the Rust task will exit when its window emit
-    // returns an error or when it observes the abort flag (added later).
     void invoke("chat_stream_abort", { requestId }).catch(() => undefined);
   };
   req.signal?.addEventListener("abort", onAbort, { once: true });
 
-  // Fire the Rust command. We intentionally don't await it here — chunks
-  // arrive via events; the command's resolution just signals overall done.
   const completion = invoke<void>("chat_stream", {
     requestId,
     apiKey,
@@ -201,6 +278,8 @@ export async function* streamChat(
 ): AsyncGenerator<string, void, unknown> {
   if (isTauri()) {
     yield* streamChatTauri(req);
+  } else if (isExtension()) {
+    yield* streamChatDirect(req);
   } else {
     yield* streamChatWeb(req);
   }

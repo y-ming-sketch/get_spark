@@ -41,6 +41,7 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_ICONS = ROOT / "public" / "icons"
 TAURI_ICONS = ROOT / "src-tauri" / "icons"
+EXT_ICONS = ROOT / "extension-chrome" / "icons"
 
 # Spark brand colors
 SPARK_RED = (140, 21, 21, 255)       # Stanford Cardinal #8C1515
@@ -48,6 +49,7 @@ CREAM = (250, 249, 245, 255)         # warm bg #FAF9F5
 
 PUBLIC_ICONS.mkdir(parents=True, exist_ok=True)
 TAURI_ICONS.mkdir(parents=True, exist_ok=True)
+EXT_ICONS.mkdir(parents=True, exist_ok=True)
 
 
 def draw_spark_mark(size: int, bg: tuple, fg: tuple, padding_ratio: float = 0.15) -> Image.Image:
@@ -153,6 +155,11 @@ def main() -> None:
     print()
     write_ico(TAURI_ICONS / "icon.ico")
     write_icns(TAURI_ICONS / "icon.icns")
+
+    # ─── Chrome extension icons ────────────────────────────────────────────
+    print("\nChrome extension icons:")
+    for s in (16, 32, 48, 128):
+        save(make_standard(s), EXT_ICONS / f"icon-{s}.png")
 
     print("\nDone.")
 
