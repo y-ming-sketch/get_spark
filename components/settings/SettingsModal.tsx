@@ -7,6 +7,7 @@ import {
   Cpu,
   Globe,
   MessageSquareCode,
+  Mic,
   Info,
 } from "lucide-react";
 import { Modal } from "../ui/Modal";
@@ -14,6 +15,7 @@ import { ApiKeyPanel } from "./ApiKeyPanel";
 import { ModelPanel } from "./ModelPanel";
 import { LanguagePanel } from "./LanguagePanel";
 import { PromptPanel } from "./PromptPanel";
+import { VoicePanel } from "./VoicePanel";
 import { AboutPanel } from "./AboutPanel";
 import { cn } from "@/lib/utils";
 
@@ -25,11 +27,17 @@ interface Props {
   initialTab?: TabId;
 }
 
-type TabId = "api-key" | "model" | "language" | "prompt" | "about";
+type TabId = "api-key" | "model" | "language" | "prompt" | "voice" | "about";
 
 interface Tab {
   id: TabId;
-  labelKey: "tabApiKey" | "tabModel" | "tabLanguage" | "tabPrompt" | "tabAbout";
+  labelKey:
+    | "tabApiKey"
+    | "tabModel"
+    | "tabLanguage"
+    | "tabPrompt"
+    | "tabVoice"
+    | "tabAbout";
   icon: ReactNode;
   render: () => ReactNode;
 }
@@ -39,6 +47,7 @@ const TABS: Tab[] = [
   { id: "model", labelKey: "tabModel", icon: <Cpu size={14} />, render: () => <ModelPanel /> },
   { id: "language", labelKey: "tabLanguage", icon: <Globe size={14} />, render: () => <LanguagePanel /> },
   { id: "prompt", labelKey: "tabPrompt", icon: <MessageSquareCode size={14} />, render: () => <PromptPanel /> },
+  { id: "voice", labelKey: "tabVoice", icon: <Mic size={14} />, render: () => <VoicePanel /> },
   { id: "about", labelKey: "tabAbout", icon: <Info size={14} />, render: () => <AboutPanel /> },
 ];
 

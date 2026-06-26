@@ -26,6 +26,12 @@ interface SparkState {
   /** Null means "use DEFAULT_SYSTEM_PROMPT". Empty string is allowed. */
   customSystemPrompt: string | null;
 
+  // Voice preferences
+  /** Either "auto" (use UI locale) or a BCP-47 tag like "en-US". */
+  sttLang: string;
+  /** When true, every assistant reply is read aloud automatically. */
+  autoSpeak: boolean;
+
   // selectors
   getActive: () => Conversation | undefined;
 
@@ -61,6 +67,9 @@ interface SparkState {
 
   setTemperature: (n: number) => void;
   setCustomSystemPrompt: (v: string | null) => void;
+
+  setSttLang: (v: string) => void;
+  setAutoSpeak: (v: boolean) => void;
 }
 
 function makeConversation(model: ModelId): Conversation {
@@ -90,6 +99,9 @@ export const useSpark = create<SparkState>()(
 
       temperature: 0.7,
       customSystemPrompt: null,
+
+      sttLang: "auto",
+      autoSpeak: false,
 
       getActive: () => {
         const { conversations, activeId } = get();
@@ -212,6 +224,9 @@ export const useSpark = create<SparkState>()(
       setTemperature: (n) =>
         set({ temperature: Math.max(0, Math.min(2, n)) }),
       setCustomSystemPrompt: (v) => set({ customSystemPrompt: v }),
+
+      setSttLang: (v) => set({ sttLang: v }),
+      setAutoSpeak: (v) => set({ autoSpeak: v }),
     }),
     {
       name: "spark-store",
@@ -225,6 +240,8 @@ export const useSpark = create<SparkState>()(
         baseUrl: s.baseUrl,
         temperature: s.temperature,
         customSystemPrompt: s.customSystemPrompt,
+        sttLang: s.sttLang,
+        autoSpeak: s.autoSpeak,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();

@@ -74,6 +74,7 @@
     "tabModel": "Model",
     "tabLanguage": "Language",
     "tabPrompt": "System prompt",
+    "tabVoice": "Voice",
     "tabAbout": "About"
   },
   "apiKey": {
@@ -158,5 +159,32 @@
     "ifPersists": "If this keeps happening,",
     "globalTitle": "Spark could not start.",
     "globalBody": "A critical error prevented Spark from rendering. Your data on this device is unaffected — refreshing usually fixes it."
+  },
+  "voice": {
+    "startAria": "Start recording",
+    "stopAria": "Stop recording",
+    "speakAria": "Read aloud",
+    "stopSpeakAria": "Stop reading",
+    "listening": "Listening…",
+    "unsupported": "Voice input isn't supported in this browser. Try Chrome or Safari.",
+    "permissionDenied": "Microphone permission denied. Enable it in your browser settings.",
+    "ttsUnsupported": "Read-aloud isn't supported in this browser."
+  },
+  "files": {
+    "dropHere": "Drop files to attach",
+    "attached": "{count, plural, one {# file} other {# files}} attached",
+    "tooLarge": "{name} is too large. Max 1 MB per file.",
+    "binary": "{name} looks binary and was skipped.",
+    "removeAria": "Remove attachment",
+    "attachAria": "Attach files"
+  },
+  "voicePanel": {
+    "title": "Voice",
+    "description": "Configure speech input and read-aloud output.",
+    "language": "Recognition language",
+    "languageAuto": "Auto (UI language)",
+    "languageHint": "Pick the language you'll dictate in. Defaults to the UI language.",
+    "autoSpeak": "Auto-speak assistant replies",
+    "autoSpeakHint": "When enabled, every assistant message is read aloud as it streams."
   }
 }

@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Check, Copy, RotateCcw, User, AlertCircle } from "lucide-react";
 import type { Message } from "@/lib/types";
+import { useSpark } from "@/lib/store";
+import { speak, speechLangFor, ttsSupported } from "@/lib/voice";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { TypingIndicator } from "./TypingIndicator";
+import { SpeakButton } from "./SpeakButton";
 import { SparkLogo } from "../SparkLogo";
 
 interface Props {
@@ -18,8 +21,30 @@ interface Props {
 export function MessageBubble({ message, onRegenerate, isLastAssistant }: Props) {
   const t = useTranslations("chat");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
+  const autoSpeak = useSpark((s) => s.autoSpeak);
   const [copied, setCopied] = useState(false);
   const isUser = message.role === "user";
+
+  // Auto-speak when an assistant reply finishes streaming (and the setting is on).
+  // We track the streaming->done transition with a ref so we only fire once.
+  const wasStreamingRef = useRef(message.streaming);
+  useEffect(() => {
+    if (isUser) return;
+    const wasStreaming = wasStreamingRef.current;
+    wasStreamingRef.current = message.streaming;
+
+    if (
+      autoSpeak &&
+      wasStreaming &&
+      !message.streaming &&
+      !message.error &&
+      message.content &&
+      ttsSupported()
+    ) {
+      speak(message.content, { lang: speechLangFor(locale) });
+    }
+  }, [message.streaming, message.content, message.error, autoSpeak, isUser, locale]);
 
   const handleCopy = async () => {
     try {
@@ -84,6 +109,7 @@ export function MessageBubble({ message, onRegenerate, isLastAssistant }: Props)
                 </>
               )}
             </button>
+            <SpeakButton text={message.content} />
             {isLastAssistant && onRegenerate && (
               <button
                 onClick={onRegenerate}
