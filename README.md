@@ -1,20 +1,20 @@
-# Spark ✨
+# Spark 
 
 > Your AI for code, trends, and everything in between.
 
 Spark is a production-ready AI chat application powered by the **DeepSeek API**.
 It's designed to be a serious assistant for three core domains:
 
-- 💻 **Coding** — write, review, debug, and explain code
-- 📈 **SEO & content trends** — what's ranking and rising
-- 👗 **Lifestyle & fashion** — trends by region and city
+- **Coding** — write, review, debug, and explain code
+- **SEO & content trends** — what's ranking and rising
+-  **Lifestyle & fashion** — trends by region and city
 
 The UI is inspired by Claude (warm cream backgrounds, generous typography) and
 branded with **Stanford Cardinal Red** (`#8C1515`).
 
 ---
 
-## ✨ Features
+## Features
 
 - Real-time **streaming responses** (Server-Sent Events) from DeepSeek
 - **Multi-conversation** sidebar with rename, delete, and auto-titles
