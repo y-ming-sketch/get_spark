@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowUp, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +11,6 @@ interface Props {
   onSubmit: () => void;
   onStop: () => void;
   isStreaming: boolean;
-  placeholder?: string;
 }
 
 export function MessageInput({
@@ -19,8 +19,8 @@ export function MessageInput({
   onSubmit,
   onStop,
   isStreaming,
-  placeholder = "Message Spark…",
 }: Props) {
+  const t = useTranslations("chat");
   const ref = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize the textarea up to a max height
@@ -48,16 +48,16 @@ export function MessageInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKey}
-          placeholder={placeholder}
+          placeholder={t("messagePlaceholder")}
           rows={1}
-          className="w-full resize-none bg-transparent px-5 py-4 pr-14 text-[15px] leading-6 outline-none placeholder:text-ink-400 scrollbar-thin"
+          className="w-full resize-none bg-transparent px-5 py-4 pe-14 text-[15px] leading-6 outline-none placeholder:text-ink-400 scrollbar-thin"
         />
         <button
           onClick={() => (isStreaming ? onStop() : onSubmit())}
           disabled={!isStreaming && !canSend}
-          aria-label={isStreaming ? "Stop generating" : "Send message"}
+          aria-label={isStreaming ? t("stopAria") : t("sendAria")}
           className={cn(
-            "absolute bottom-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full transition-all",
+            "absolute bottom-2.5 end-2.5 flex h-9 w-9 items-center justify-center rounded-full transition-all",
             isStreaming
               ? "bg-ink-700 dark:bg-ink-200 text-white dark:text-ink-700 hover:opacity-90"
               : canSend
@@ -69,7 +69,7 @@ export function MessageInput({
         </button>
       </div>
       <p className="mt-2 text-center text-[11px] text-ink-400">
-        Spark can make mistakes. Verify important info.
+        {t("disclaimer")}
       </p>
     </div>
   );

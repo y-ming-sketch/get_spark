@@ -26,6 +26,8 @@ export interface ChatRequest {
    */
   apiKey?: string;
   baseUrl?: string;
+  /** Sampling temperature (0–2). Defaults to 0.7. */
+  temperature?: number;
 }
 
 /** True when running inside the Tauri desktop shell (v1 or v2). */
@@ -66,6 +68,7 @@ async function* streamChatWeb(req: ChatRequest): AsyncGenerator<string, void, un
       model: req.model,
       messages: req.messages,
       baseUrl,
+      temperature: req.temperature,
     }),
     signal: req.signal,
   });
@@ -156,6 +159,7 @@ async function* streamChatTauri(req: ChatRequest): AsyncGenerator<string, void, 
     baseUrl,
     model: req.model,
     messages: req.messages,
+    temperature: req.temperature ?? 0.7,
   }).catch((err: unknown) => {
     queue.push({
       type: "error",

@@ -24,24 +24,20 @@ export type ModelId = "deepseek-chat" | "deepseek-reasoner";
 
 export interface ModelInfo {
   id: ModelId;
-  name: string;
-  description: string;
+  /** Translation key under "model.<key>Name" / "model.<key>Desc" */
+  i18nKey: "deepseekChat" | "deepseekReasoner";
 }
 
 export const MODELS: ModelInfo[] = [
-  {
-    id: "deepseek-chat",
-    name: "Spark Chat",
-    description: "Fast, general-purpose conversations (DeepSeek-V3)",
-  },
-  {
-    id: "deepseek-reasoner",
-    name: "Spark Reasoner",
-    description: "Step-by-step reasoning for code & complex problems (DeepSeek-R1)",
-  },
+  { id: "deepseek-chat", i18nKey: "deepseekChat" },
+  { id: "deepseek-reasoner", i18nKey: "deepseekReasoner" },
 ];
 
-export const SYSTEM_PROMPT = `You are Spark, a serious and helpful AI assistant.
+/**
+ * The default system prompt. Custom prompts in Settings replace this whole
+ * string; the locale instruction is appended automatically by buildSystemPrompt.
+ */
+export const DEFAULT_SYSTEM_PROMPT = `You are Spark, a serious and helpful AI assistant.
 
 You excel at three core domains:
 1. Coding: write, review, debug, and explain code in any language.
@@ -53,3 +49,37 @@ Style:
 - Use markdown: headings, lists, code blocks with language tags.
 - When discussing trends, cite the time frame (e.g., "as of 2026") and acknowledge if real-time data isn't available.
 - Never invent sources or links.`;
+
+const LOCALE_LABELS: Record<string, string> = {
+  en: "English",
+  es: "Spanish",
+  fr: "French",
+  de: "German",
+  ja: "Japanese",
+  zh: "Chinese",
+  ko: "Korean",
+  pt: "Portuguese",
+  ru: "Russian",
+  ar: "Arabic",
+  hi: "Hindi",
+  id: "Indonesian",
+};
+
+/**
+ * Compose the final system prompt for a chat turn. Appends a locale-reply
+ * directive so the assistant matches the user's UI language by default,
+ * but never forces it (the user can override mid-thread by asking).
+ */
+export function buildSystemPrompt(
+  locale: string,
+  customPrompt?: string | null,
+): string {
+  const base = (customPrompt ?? DEFAULT_SYSTEM_PROMPT).trim();
+  const language = LOCALE_LABELS[locale] ?? "English";
+  return `${base}
+
+Reply in ${language} by default. Switch languages if the user asks or writes to you in a different language.`;
+}
+
+/** @deprecated use buildSystemPrompt(locale, customPrompt) instead. */
+export const SYSTEM_PROMPT = DEFAULT_SYSTEM_PROMPT;

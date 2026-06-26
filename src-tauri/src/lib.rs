@@ -65,6 +65,7 @@ async fn chat_stream(
     base_url: String,
     model: String,
     messages: Vec<ChatMessage>,
+    temperature: Option<f32>,
 ) -> Result<(), String> {
     let aborted = Arc::new(AtomicBool::new(false));
 
@@ -79,6 +80,7 @@ async fn chat_stream(
         &base_url,
         &model,
         &messages,
+        temperature.unwrap_or(0.7),
         &aborted,
     )
     .await;
@@ -127,6 +129,7 @@ async fn run_stream(
     base_url: &str,
     model: &str,
     messages: &[ChatMessage],
+    temperature: f32,
     aborted: &Arc<AtomicBool>,
 ) -> Result<(), String> {
     let url = format!(
@@ -143,7 +146,7 @@ async fn run_stream(
         model,
         messages,
         stream: true,
-        temperature: 0.7,
+        temperature,
     };
 
     let response = client

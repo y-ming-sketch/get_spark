@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { ArrowDown, Code2, Sparkles, TrendingUp, MapPin } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useSpark } from "@/lib/store";
-import { SYSTEM_PROMPT, type Message } from "@/lib/types";
+import { buildSystemPrompt, type Message } from "@/lib/types";
 import { streamChat } from "@/lib/chatClient";
 import { cn } from "@/lib/utils";
 import { MessageBubble } from "./MessageBubble";
@@ -17,34 +18,16 @@ interface ChatWindowProps {
   onOpenSettings: () => void;
 }
 
-const SUGGESTIONS = [
-  {
-    icon: <Code2 size={16} />,
-    label: "Review my code",
-    prompt: "Review this code and suggest improvements:\n\n```\n// paste code here\n```",
-  },
-  {
-    icon: <TrendingUp size={16} />,
-    label: "SEO trends",
-    prompt: "What are the top SEO trends and ranking factors right now?",
-  },
-  {
-    icon: <MapPin size={16} />,
-    label: "Fashion in Tokyo",
-    prompt: "What are the current fashion trends in Tokyo for this season?",
-  },
-  {
-    icon: <Sparkles size={16} />,
-    label: "Explain a concept",
-    prompt: "Explain async/await in JavaScript with a real-world example.",
-  },
-];
-
 export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
+  const t = useTranslations("chat");
+  const locale = useLocale();
+
   const hydrated = useSpark((s) => s.hydrated);
   const active = useSpark((s) => s.getActive());
   const activeId = useSpark((s) => s.activeId);
   const model = useSpark((s) => s.model);
+  const temperature = useSpark((s) => s.temperature);
+  const customSystemPrompt = useSpark((s) => s.customSystemPrompt);
   const hasApiKey = useSpark((s) => s.hasApiKey);
   const needsOnboarding = useSpark((s) => s.needsOnboarding);
   const newConversation = useSpark((s) => s.newConversation);
@@ -60,7 +43,29 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Auto-scroll to bottom when new content arrives, but only if user is near bottom
+  const SUGGESTIONS = [
+    {
+      icon: <Code2 size={16} />,
+      label: t("suggestionReviewCode"),
+      prompt: t("promptReviewCode"),
+    },
+    {
+      icon: <TrendingUp size={16} />,
+      label: t("suggestionSeoTrends"),
+      prompt: t("promptSeoTrends"),
+    },
+    {
+      icon: <MapPin size={16} />,
+      label: t("suggestionFashion"),
+      prompt: t("promptFashion"),
+    },
+    {
+      icon: <Sparkles size={16} />,
+      label: t("suggestionExplain"),
+      prompt: t("promptExplain"),
+    },
+  ];
+
   const scrollToBottom = (smooth = true) => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -76,7 +81,6 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
     if (nearBottom) scrollToBottom();
   }, [active?.messages]);
 
-  // Track scroll position to show the "scroll to bottom" button
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -97,18 +101,15 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
   const sendMessage = async (text: string, opts?: { regenerate?: boolean }) => {
     if (!text.trim() && !opts?.regenerate) return;
 
-    // Ensure we have an active conversation
     let convoId = activeId;
     if (!convoId) {
       convoId = newConversation();
     }
 
-    // Snapshot conversation BEFORE we add the new user/assistant entries
     const state = useSpark.getState();
     const convoBefore = state.conversations.find((c) => c.id === convoId);
     if (!convoBefore) return;
 
-    // Build the message list to send upstream
     const baseHistory: Message[] = convoBefore.messages.filter(
       (m) => !m.error,
     );
@@ -125,13 +126,11 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
       baseHistory.push(userMsg);
       setInput("");
     } else {
-      // for regenerate, last user message is already in history
       const lastUser = [...baseHistory].reverse().find((m) => m.role === "user");
       if (!lastUser) return;
       userText = lastUser.content;
     }
 
-    // Create the assistant placeholder
     const assistantId = nanoid(8);
     addMessage(convoId, {
       id: assistantId,
@@ -147,7 +146,10 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
 
     try {
       const apiMessages = [
-        { role: "system" as const, content: SYSTEM_PROMPT },
+        {
+          role: "system" as const,
+          content: buildSystemPrompt(locale, customSystemPrompt),
+        },
         ...baseHistory.map((m) => ({
           role: m.role as "user" | "assistant" | "system",
           content: m.content,
@@ -158,6 +160,7 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
         model,
         messages: apiMessages,
         signal: controller.signal,
+        temperature,
       })) {
         appendToMessage(convoId, assistantId, chunk);
       }
@@ -185,7 +188,6 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
     sendMessage("", { regenerate: true });
   };
 
-  // Loading state while Zustand hydrates from localStorage
   if (!hydrated) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -194,7 +196,6 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
     );
   }
 
-  // First-launch / no-key state — gate the whole chat behind onboarding.
   if (needsOnboarding && !hasApiKey) {
     return (
       <div className="flex flex-1 flex-col bg-cream-50 dark:bg-ink-800">
@@ -208,24 +209,23 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
 
   return (
     <div className="flex flex-1 flex-col bg-cream-50 dark:bg-ink-800">
-      {/* Top bar */}
       <header className="flex items-center justify-between border-b border-cream-300 dark:border-ink-500 px-4 py-2.5">
         <h1 className="truncate text-sm font-medium">
-          {active?.title || "New chat"}
+          {active?.title || t("newChat")}
         </h1>
         <ModelSelector />
       </header>
 
-      {/* Messages or empty state */}
       <div
         ref={scrollerRef}
         className="relative flex-1 overflow-y-auto scrollbar-thin"
       >
         {isEmpty ? (
           <EmptyState
-            onPick={(prompt) => {
-              setInput(prompt);
-            }}
+            title={t("emptyTitle")}
+            subtitle={t("emptySubtitle")}
+            suggestions={SUGGESTIONS}
+            onPick={(prompt) => setInput(prompt)}
           />
         ) : (
           <div className="mx-auto w-full max-w-3xl py-4">
@@ -248,14 +248,13 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
           <button
             onClick={() => scrollToBottom()}
             className="sticky bottom-4 left-1/2 -translate-x-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-cream-300 dark:border-ink-500 bg-cream-50 dark:bg-ink-700 shadow-md hover:bg-cream-100 dark:hover:bg-ink-600 transition-colors"
-            aria-label="Scroll to bottom"
+            aria-label={t("scrollToBottomAria")}
           >
             <ArrowDown size={16} />
           </button>
         )}
       </div>
 
-      {/* Input */}
       <MessageInput
         value={input}
         onChange={setInput}
@@ -267,24 +266,29 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
   );
 }
 
-function EmptyState({ onPick }: { onPick: (prompt: string) => void }) {
+interface EmptyStateProps {
+  title: string;
+  subtitle: string;
+  suggestions: { icon: React.ReactNode; label: string; prompt: string }[];
+  onPick: (prompt: string) => void;
+}
+
+function EmptyState({ title, subtitle, suggestions, onPick }: EmptyStateProps) {
   return (
     <div className="flex h-full flex-col items-center justify-center px-4 py-12">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-spark-500 text-white shadow-md">
         <SparkLogo size={28} />
       </div>
-      <h2 className="text-2xl font-semibold tracking-tight">Hello, I'm Spark.</h2>
-      <p className="mt-1 text-sm text-ink-400">
-        Your AI for code, trends, and everything in between.
-      </p>
+      <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+      <p className="mt-1 text-sm text-ink-400">{subtitle}</p>
 
       <div className="mt-8 grid w-full max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2">
-        {SUGGESTIONS.map((s) => (
+        {suggestions.map((s) => (
           <button
             key={s.label}
             onClick={() => onPick(s.prompt)}
             className={cn(
-              "flex items-center gap-3 rounded-xl border border-cream-300 dark:border-ink-500 bg-cream-50 dark:bg-ink-700 px-4 py-3 text-left text-sm transition-all",
+              "flex items-center gap-3 rounded-xl border border-cream-300 dark:border-ink-500 bg-cream-50 dark:bg-ink-700 px-4 py-3 text-start text-sm transition-all",
               "hover:border-spark-500 hover:bg-cream-100 dark:hover:bg-ink-600",
             )}
           >
