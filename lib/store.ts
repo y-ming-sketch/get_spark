@@ -1,0 +1,195 @@
+"use client";
+
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { nanoid } from "nanoid";
+import type { Conversation, Message, ModelId } from "./types";
+import { deriveTitle } from "./utils";
+
+interface SparkState {
+  conversations: Conversation[];
+  activeId: string | null;
+  model: ModelId;
+  theme: "light" | "dark" | "system";
+  hydrated: boolean;
+
+  // selectors
+  getActive: () => Conversation | undefined;
+
+  // actions
+  setHydrated: () => void;
+  newConversation: () => string;
+  selectConversation: (id: string) => void;
+  deleteConversation: (id: string) => void;
+  renameConversation: (id: string, title: string) => void;
+  clearAll: () => void;
+
+  addMessage: (conversationId: string, msg: Message) => void;
+  updateMessage: (
+    conversationId: string,
+    messageId: string,
+    patch: Partial<Message>,
+  ) => void;
+  appendToMessage: (
+    conversationId: string,
+    messageId: string,
+    chunk: string,
+  ) => void;
+  removeMessage: (conversationId: string, messageId: string) => void;
+  /** Remove the last assistant message in a conversation (for regenerate). */
+  removeLastAssistant: (conversationId: string) => void;
+
+  setModel: (m: ModelId) => void;
+  setTheme: (t: "light" | "dark" | "system") => void;
+}
+
+function makeConversation(model: ModelId): Conversation {
+  const now = Date.now();
+  return {
+    id: nanoid(10),
+    title: "New chat",
+    messages: [],
+    createdAt: now,
+    updatedAt: now,
+    model,
+  };
+}
+
+export const useSpark = create<SparkState>()(
+  persist(
+    (set, get) => ({
+      conversations: [],
+      activeId: null,
+      model: "deepseek-chat",
+      theme: "system",
+      hydrated: false,
+
+      getActive: () => {
+        const { conversations, activeId } = get();
+        return conversations.find((c) => c.id === activeId);
+      },
+
+      setHydrated: () => set({ hydrated: true }),
+
+      newConversation: () => {
+        const convo = makeConversation(get().model);
+        set((s) => ({
+          conversations: [convo, ...s.conversations],
+          activeId: convo.id,
+        }));
+        return convo.id;
+      },
+
+      selectConversation: (id) => set({ activeId: id }),
+
+      deleteConversation: (id) =>
+        set((s) => {
+          const remaining = s.conversations.filter((c) => c.id !== id);
+          const nextActive =
+            s.activeId === id ? remaining[0]?.id ?? null : s.activeId;
+          return { conversations: remaining, activeId: nextActive };
+        }),
+
+      renameConversation: (id, title) =>
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === id ? { ...c, title, updatedAt: Date.now() } : c,
+          ),
+        })),
+
+      clearAll: () => set({ conversations: [], activeId: null }),
+
+      addMessage: (conversationId, msg) =>
+        set((s) => ({
+          conversations: s.conversations.map((c) => {
+            if (c.id !== conversationId) return c;
+            const messages = [...c.messages, msg];
+            // auto-title on first user message
+            const title =
+              c.title === "New chat" && msg.role === "user"
+                ? deriveTitle(msg.content)
+                : c.title;
+            return { ...c, messages, title, updatedAt: Date.now() };
+          }),
+        })),
+
+      updateMessage: (conversationId, messageId, patch) =>
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === messageId ? { ...m, ...patch } : m,
+                  ),
+                  updatedAt: Date.now(),
+                }
+              : c,
+          ),
+        })),
+
+      appendToMessage: (conversationId, messageId, chunk) =>
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === messageId
+                      ? { ...m, content: m.content + chunk }
+                      : m,
+                  ),
+                  updatedAt: Date.now(),
+                }
+              : c,
+          ),
+        })),
+
+      removeMessage: (conversationId, messageId) =>
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  messages: c.messages.filter((m) => m.id !== messageId),
+                  updatedAt: Date.now(),
+                }
+              : c,
+          ),
+        })),
+
+      removeLastAssistant: (conversationId) =>
+        set((s) => ({
+          conversations: s.conversations.map((c) => {
+            if (c.id !== conversationId) return c;
+            const idx = [...c.messages]
+              .reverse()
+              .findIndex((m) => m.role === "assistant");
+            if (idx === -1) return c;
+            const realIdx = c.messages.length - 1 - idx;
+            return {
+              ...c,
+              messages: c.messages.filter((_, i) => i !== realIdx),
+              updatedAt: Date.now(),
+            };
+          }),
+        })),
+
+      setModel: (m) => set({ model: m }),
+      setTheme: (t) => set({ theme: t }),
+    }),
+    {
+      name: "spark-store",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (s) => ({
+        conversations: s.conversations,
+        activeId: s.activeId,
+        model: s.model,
+        theme: s.theme,
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated();
+      },
+    },
+  ),
+);

@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* highlight.js theme for code blocks */
+@import "highlight.js/styles/github.css" layer(base);
+
+@layer base {
+  :root {
+    --bg: 250 249 245;           /* cream-50 */
+    --bg-panel: 245 241 232;     /* cream-100 */
+    --bg-hover: 237 231 214;     /* cream-200 */
+    --border: 221 212 189;       /* cream-300 */
+    --fg: 27 26 22;              /* ink-700 */
+    --fg-muted: 107 101 87;      /* ink-400 */
+    --primary: 140 21 21;        /* spark-500 — Stanford Red */
+    --primary-hover: 122 18 18;  /* spark-600 */
+  }
+
+  .dark {
+    --bg: 19 18 15;              /* ink-800 */
+    --bg-panel: 27 26 22;        /* ink-700 */
+    --bg-hover: 40 37 31;        /* ink-600 */
+    --border: 61 58 51;          /* ink-500 */
+    --fg: 245 245 244;           /* ink-50 */
+    --fg-muted: 163 158 146;     /* ink-300 */
+    --primary: 201 56 56;        /* spark-400 — brighter in dark */
+    --primary-hover: 227 110 110;
+  }
+
+  * {
+    border-color: rgb(var(--border));
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    background-color: rgb(var(--bg));
+    color: rgb(var(--fg));
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* dark-mode override for code highlighting */
+  .dark .hljs {
+    background: #1b1a16 !important;
+    color: #e7e5e1 !important;
+  }
+}
+
+@layer components {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--border)) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--border));
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
