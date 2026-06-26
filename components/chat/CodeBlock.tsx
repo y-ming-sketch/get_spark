@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { Check, Copy } from "lucide-react";
 
 interface Props {
@@ -9,6 +10,8 @@ interface Props {
 
 /** A <pre> wrapper that exposes a Copy button and a language label. */
 export function CodeBlock({ children }: Props) {
+  const t = useTranslations("common");
+  const tChat = useTranslations("chat");
   const preRef = useRef<HTMLPreElement>(null);
   const [copied, setCopied] = useState(false);
 
@@ -40,15 +43,15 @@ export function CodeBlock({ children }: Props) {
         <button
           onClick={handleCopy}
           className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-ink-400 hover:text-ink-700 dark:hover:text-ink-100 transition-colors"
-          aria-label="Copy code"
+          aria-label={tChat("copyCodeAria")}
         >
           {copied ? (
             <>
-              <Check size={12} /> Copied
+              <Check size={12} /> {t("copied")}
             </>
           ) : (
             <>
-              <Copy size={12} /> Copy
+              <Copy size={12} /> {t("copy")}
             </>
           )}
         </button>

@@ -21,6 +21,11 @@ interface SparkState {
   /** When set, the chat UI shows the welcome / API-key entry screen. */
   needsOnboarding: boolean;
 
+  // Model behavior — these flow into every chat request
+  temperature: number;
+  /** Null means "use DEFAULT_SYSTEM_PROMPT". Empty string is allowed. */
+  customSystemPrompt: string | null;
+
   // selectors
   getActive: () => Conversation | undefined;
 
@@ -53,6 +58,9 @@ interface SparkState {
   setHasApiKey: (v: boolean) => void;
   setBaseUrl: (v: string) => void;
   setNeedsOnboarding: (v: boolean) => void;
+
+  setTemperature: (n: number) => void;
+  setCustomSystemPrompt: (v: string | null) => void;
 }
 
 function makeConversation(model: ModelId): Conversation {
@@ -79,6 +87,9 @@ export const useSpark = create<SparkState>()(
       hasApiKey: false,
       baseUrl: "https://api.deepseek.com/v1",
       needsOnboarding: false,
+
+      temperature: 0.7,
+      customSystemPrompt: null,
 
       getActive: () => {
         const { conversations, activeId } = get();
@@ -197,6 +208,10 @@ export const useSpark = create<SparkState>()(
       setHasApiKey: (v) => set({ hasApiKey: v }),
       setBaseUrl: (v) => set({ baseUrl: v }),
       setNeedsOnboarding: (v) => set({ needsOnboarding: v }),
+
+      setTemperature: (n) =>
+        set({ temperature: Math.max(0, Math.min(2, n)) }),
+      setCustomSystemPrompt: (v) => set({ customSystemPrompt: v }),
     }),
     {
       name: "spark-store",
@@ -208,6 +223,8 @@ export const useSpark = create<SparkState>()(
         theme: s.theme,
         hasApiKey: s.hasApiKey,
         baseUrl: s.baseUrl,
+        temperature: s.temperature,
+        customSystemPrompt: s.customSystemPrompt,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();

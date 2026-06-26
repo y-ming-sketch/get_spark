@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { AlertTriangle, RotateCcw, Home } from "lucide-react";
 
 /**
@@ -14,9 +15,11 @@ export default function ErrorPage({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("error");
+  const tCommon = useTranslations("common");
+
   useEffect(() => {
     // Log to the browser console only — no telemetry, ever.
-    // The digest is a stable hash Next.js attaches to production errors.
     console.error("[Spark] route error", error);
   }, [error]);
 
@@ -28,16 +31,13 @@ export default function ErrorPage({
         </div>
 
         <h1 className="mt-5 text-2xl font-semibold tracking-tight">
-          Something went sideways.
+          {t("title")}
         </h1>
-        <p className="mt-2 text-sm text-ink-400 leading-relaxed">
-          Spark hit an unexpected error while rendering this view. Your chat
-          history and settings are safe — they live on this device, untouched.
-        </p>
+        <p className="mt-2 text-sm text-ink-400 leading-relaxed">{t("body")}</p>
 
         {error.digest && (
           <p className="mt-3 text-[11px] font-mono text-ink-400">
-            ref: {error.digest}
+            {t("ref", { digest: error.digest })}
           </p>
         )}
 
@@ -46,27 +46,27 @@ export default function ErrorPage({
             onClick={reset}
             className="inline-flex items-center gap-1.5 rounded-full bg-spark-500 px-4 py-2 text-sm font-medium text-white hover:bg-spark-600 transition-colors"
           >
-            <RotateCcw size={14} /> Try again
+            <RotateCcw size={14} /> {tCommon("tryAgain")}
           </button>
           <a
             href="/"
             className="inline-flex items-center gap-1.5 rounded-full border border-cream-300 dark:border-ink-500 px-4 py-2 text-sm text-ink-500 dark:text-ink-100 hover:bg-cream-100 dark:hover:bg-ink-700 transition-colors"
           >
-            <Home size={14} /> Reload Spark
+            <Home size={14} /> {tCommon("reload")}
           </a>
         </div>
 
         <p className="mt-6 text-[11px] text-ink-400">
-          If this keeps happening,{" "}
+          {t("ifPersists")}{" "}
           <a
             href="https://github.com/y-ming-sketch/get_spark/issues/new"
             target="_blank"
             rel="noopener noreferrer"
             className="text-spark-500 hover:text-spark-600 underline underline-offset-2"
           >
-            open an issue
+            {t("openIssue")}
           </a>{" "}
-          with the reference above.
+          {t("openIssueAfter")}
         </p>
       </div>
     </main>

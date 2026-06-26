@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { getLocale, getMessages } from "next-intl/server";
+import { NextIntlClientProvider } from "next-intl";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { PWAInstaller } from "@/components/PWAInstaller";
 import { APP_NAME, APP_VERSION } from "@/lib/version";
+import { LOCALE_INFO, type Locale } from "@/lib/i18n/locales";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
@@ -122,13 +125,17 @@ const JSON_LD = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = (await getLocale()) as Locale;
+  const messages = await getMessages();
+  const dir = LOCALE_INFO[locale]?.dir ?? "ltr";
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
         {/* Avoid theme flash by setting .dark class before hydration */}
         <script
@@ -161,7 +168,9 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <ThemeProvider>{children}</ThemeProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <ThemeProvider>{children}</ThemeProvider>
+        </NextIntlClientProvider>
         <PWAInstaller />
       </body>
     </html>

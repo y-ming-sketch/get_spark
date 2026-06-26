@@ -1,17 +1,19 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { useSpark } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle() {
+  const t = useTranslations("theme");
   const theme = useSpark((s) => s.theme);
   const setTheme = useSpark((s) => s.setTheme);
 
-  const options: { id: typeof theme; icon: React.ReactNode; label: string }[] = [
-    { id: "light", icon: <Sun size={14} />, label: "Light" },
-    { id: "system", icon: <Monitor size={14} />, label: "System" },
-    { id: "dark", icon: <Moon size={14} />, label: "Dark" },
+  const options: { id: typeof theme; icon: React.ReactNode; labelKey: "light" | "system" | "dark" }[] = [
+    { id: "light", icon: <Sun size={14} />, labelKey: "light" },
+    { id: "system", icon: <Monitor size={14} />, labelKey: "system" },
+    { id: "dark", icon: <Moon size={14} />, labelKey: "dark" },
   ];
 
   return (
@@ -26,8 +28,8 @@ export function ThemeToggle() {
               ? "bg-spark-500 text-white"
               : "text-ink-400 hover:text-ink-700 dark:hover:text-ink-100",
           )}
-          aria-label={`${opt.label} theme`}
-          title={`${opt.label} theme`}
+          aria-label={t(opt.labelKey)}
+          title={t(opt.labelKey)}
         >
           {opt.icon}
         </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Sparkles, Shield, KeyRound, ArrowRight } from "lucide-react";
 import { SparkLogo } from "./SparkLogo";
 
@@ -7,29 +8,30 @@ interface Props {
   onGetStarted: () => void;
 }
 
-const HIGHLIGHTS = [
-  {
-    icon: <KeyRound size={14} />,
-    title: "Bring your own key",
-    body: "Paste your DeepSeek key once. It's encrypted on this device and never touches our servers.",
-  },
-  {
-    icon: <Shield size={14} />,
-    title: "Local-first",
-    body: "Your chats, files, and settings live on your device. No accounts, no telemetry, no tracking.",
-  },
-  {
-    icon: <Sparkles size={14} />,
-    title: "One brain, every device",
-    body: "Same conversation history across web, desktop, mobile, and browser extensions (coming soon).",
-  },
-];
-
 /**
  * First-launch screen shown when no API key is configured. Routes the user
  * into the Settings modal with a single click.
  */
 export function Welcome({ onGetStarted }: Props) {
+  const t = useTranslations("welcome");
+  const highlights = [
+    {
+      icon: <KeyRound size={14} />,
+      title: t("byokTitle"),
+      body: t("byokBody"),
+    },
+    {
+      icon: <Shield size={14} />,
+      title: t("localTitle"),
+      body: t("localBody"),
+    },
+    {
+      icon: <Sparkles size={14} />,
+      title: t("anywhereTitle"),
+      body: t("anywhereBody"),
+    },
+  ];
+
   return (
     <div className="flex flex-1 items-center justify-center px-4 py-12 animate-fade-in">
       <div className="w-full max-w-xl text-center">
@@ -38,14 +40,12 @@ export function Welcome({ onGetStarted }: Props) {
         </div>
 
         <h1 className="mt-5 text-3xl font-semibold tracking-tight">
-          Welcome to Spark.
+          {t("title")}
         </h1>
-        <p className="mt-2 text-sm text-ink-400">
-          Your AI for code, trends, and everything in between.
-        </p>
+        <p className="mt-2 text-sm text-ink-400">{t("subtitle")}</p>
 
-        <div className="mt-8 grid gap-3 text-left sm:grid-cols-1">
-          {HIGHLIGHTS.map((h) => (
+        <div className="mt-8 grid gap-3 text-start sm:grid-cols-1">
+          {highlights.map((h) => (
             <div
               key={h.title}
               className="flex gap-3 rounded-xl border border-cream-300 dark:border-ink-500 bg-cream-50 dark:bg-ink-700 px-4 py-3"
@@ -67,21 +67,20 @@ export function Welcome({ onGetStarted }: Props) {
           onClick={onGetStarted}
           className="mt-8 inline-flex items-center gap-2 rounded-full bg-spark-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-spark-600 transition-colors"
         >
-          Add your API key
+          {t("cta")}
           <ArrowRight size={14} />
         </button>
 
         <p className="mt-4 text-[11px] text-ink-400">
-          Don't have one?{" "}
+          {t("getKeyPrompt")}{" "}
           <a
             href="https://platform.deepseek.com/api_keys"
             target="_blank"
             rel="noopener noreferrer"
             className="text-spark-500 hover:text-spark-600 underline underline-offset-2"
           >
-            Grab a DeepSeek key in 60 seconds
+            {t("getKeyLink")}
           </a>
-          .
         </p>
       </div>
     </div>

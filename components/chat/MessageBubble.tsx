@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Check, Copy, RotateCcw, User, AlertCircle } from "lucide-react";
 import type { Message } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,8 @@ interface Props {
 }
 
 export function MessageBubble({ message, onRegenerate, isLastAssistant }: Props) {
+  const t = useTranslations("chat");
+  const tCommon = useTranslations("common");
   const [copied, setCopied] = useState(false);
   const isUser = message.role === "user";
 
@@ -69,15 +72,15 @@ export function MessageBubble({ message, onRegenerate, isLastAssistant }: Props)
             <button
               onClick={handleCopy}
               className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-ink-400 hover:text-ink-700 dark:hover:text-ink-100"
-              aria-label="Copy message"
+              aria-label={t("copyMessageAria")}
             >
               {copied ? (
                 <>
-                  <Check size={12} /> Copied
+                  <Check size={12} /> {tCommon("copied")}
                 </>
               ) : (
                 <>
-                  <Copy size={12} /> Copy
+                  <Copy size={12} /> {tCommon("copy")}
                 </>
               )}
             </button>
@@ -85,9 +88,9 @@ export function MessageBubble({ message, onRegenerate, isLastAssistant }: Props)
               <button
                 onClick={onRegenerate}
                 className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-ink-400 hover:text-ink-700 dark:hover:text-ink-100"
-                aria-label="Regenerate response"
+                aria-label={t("regenerate")}
               >
-                <RotateCcw size={12} /> Regenerate
+                <RotateCcw size={12} /> {t("regenerate")}
               </button>
             )}
           </div>
