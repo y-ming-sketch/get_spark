@@ -5,7 +5,7 @@ import { ArrowDown, Code2, Sparkles, TrendingUp, MapPin } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useSpark } from "@/lib/store";
 import { SYSTEM_PROMPT, type Message } from "@/lib/types";
-import { readChatStream } from "@/lib/stream";
+import { streamChat } from "@/lib/chatClient";
 import { cn } from "@/lib/utils";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
@@ -147,21 +147,11 @@ export function ChatWindow() {
         })),
       ];
 
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, messages: apiMessages }),
+      for await (const chunk of streamChat({
+        model,
+        messages: apiMessages,
         signal: controller.signal,
-      });
-
-      if (!res.ok) {
-        const err = await res
-          .json()
-          .catch(() => ({ error: `Request failed (${res.status})` }));
-        throw new Error(err.error || `Request failed (${res.status})`);
-      }
-
-      for await (const chunk of readChatStream(res, controller.signal)) {
+      })) {
         appendToMessage(convoId, assistantId, chunk);
       }
       updateMessage(convoId, assistantId, { streaming: false });
