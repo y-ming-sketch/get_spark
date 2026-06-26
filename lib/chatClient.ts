@@ -48,6 +48,15 @@ export function isExtension(): boolean {
   return Boolean(g.chrome?.runtime?.id);
 }
 
+/** True when running inside a Capacitor-wrapped iOS or Android shell. */
+export function isCapacitor(): boolean {
+  if (typeof window === "undefined") return false;
+  const w = window as unknown as {
+    Capacitor?: { isNativePlatform?: () => boolean };
+  };
+  return Boolean(w.Capacitor?.isNativePlatform?.());
+}
+
 async function resolveKey(supplied?: string): Promise<string | undefined> {
   if (supplied) return supplied;
   if (!keystore.available()) return undefined;
@@ -278,7 +287,8 @@ export async function* streamChat(
 ): AsyncGenerator<string, void, unknown> {
   if (isTauri()) {
     yield* streamChatTauri(req);
-  } else if (isExtension()) {
+  } else if (isExtension() || isCapacitor()) {
+    // Both run a static SPA with no Next.js server — call DeepSeek directly.
     yield* streamChatDirect(req);
   } else {
     yield* streamChatWeb(req);
