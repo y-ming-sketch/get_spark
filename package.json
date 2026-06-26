@@ -8,7 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "icons": "python3 scripts/generate-icons.py",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:icon": "tauri icon ./src-tauri/icons/icon.png"
   },
   "dependencies": {
     "next": "14.2.5",
@@ -22,12 +27,14 @@
     "lucide-react": "^0.408.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.4.0",
-    "nanoid": "^5.0.7"
+    "nanoid": "^5.0.7",
+    "@tauri-apps/api": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@tauri-apps/cli": "^2.0.0",
     "autoprefixer": "^10.4.19",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.2.5",

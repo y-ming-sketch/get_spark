@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { PWAInstaller } from "@/components/PWAInstaller";
 
 export const metadata: Metadata = {
   title: "Spark — AI for code, trends & style",
@@ -16,6 +17,15 @@ export const metadata: Metadata = {
   ],
   applicationName: "Spark",
   authors: [{ name: "Spark" }],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Spark",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     title: "Spark — AI for code, trends & style",
     description:
@@ -23,7 +33,12 @@ export const metadata: Metadata = {
     type: "website",
   },
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
 };
 
@@ -34,6 +49,8 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -71,6 +88,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <ThemeProvider>{children}</ThemeProvider>
+        <PWAInstaller />
       </body>
     </html>
   );
