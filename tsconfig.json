@@ -23,6 +23,7 @@
   "exclude": [
     "node_modules",
     "extension-chrome",
+    "extension-vscode",
     "mobile-shell",
     "src-tauri"
   ]
