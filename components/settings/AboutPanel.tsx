@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { Shield, Code, Github, ExternalLink, Trash2 } from "lucide-react";
-import Link from "next/link";
 import { useSpark } from "@/lib/store";
 import { keystore } from "@/lib/keystore";
 import { APP_NAME, APP_VERSION } from "@/lib/version";
@@ -66,12 +65,14 @@ export function AboutPanel() {
       <section>
         <h3 className="text-sm font-semibold tracking-tight">{t("linksTitle")}</h3>
         <div className="mt-2 flex flex-col gap-1.5 text-sm">
-          <Link
+          <a
             href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-spark-500 hover:text-spark-600"
           >
             <Shield size={14} /> {t("fullPrivacy")}
-          </Link>
+          </a>
           <a
             href="https://github.com/y-ming-sketch/get_spark"
             target="_blank"

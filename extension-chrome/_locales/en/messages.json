@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "Spark — local-first AI chat",
+    "description": "Extension name shown in chrome://extensions and the Chrome Web Store."
+  },
+  "extDescription": {
+    "message": "Spark in your browser side panel. BYOK, encrypted locally, no telemetry. Right-click any selection and ask Spark.",
+    "description": "Extension long description."
+  }
+}
