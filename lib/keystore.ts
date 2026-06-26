@@ -194,5 +194,5 @@ export const keystore: Keystore = {
 export const SECRET_KEYS = {
   DEEPSEEK_API_KEY: "deepseek_api_key",
   DEEPSEEK_BASE_URL: "deepseek_base_url",
-  // future: GITHUB_PAT, ANTHROPIC_API_KEY, etc.
+  GITHUB_PAT: "github_pat",
 } as const;

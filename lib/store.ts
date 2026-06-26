@@ -32,6 +32,14 @@ interface SparkState {
   /** When true, every assistant reply is read aloud automatically. */
   autoSpeak: boolean;
 
+  // GitHub workspace connection — token lives only in the encrypted keystore.
+  hasGithubToken: boolean;
+  activeRepo: {
+    fullName: string;
+    defaultBranch: string;
+    treeSummary: string;
+  } | null;
+
   // selectors
   getActive: () => Conversation | undefined;
 
@@ -70,6 +78,15 @@ interface SparkState {
 
   setSttLang: (v: string) => void;
   setAutoSpeak: (v: boolean) => void;
+
+  setHasGithubToken: (v: boolean) => void;
+  setActiveRepo: (
+    repo: {
+      fullName: string;
+      defaultBranch: string;
+      treeSummary: string;
+    } | null,
+  ) => void;
 }
 
 function makeConversation(model: ModelId): Conversation {
@@ -102,6 +119,9 @@ export const useSpark = create<SparkState>()(
 
       sttLang: "auto",
       autoSpeak: false,
+
+      hasGithubToken: false,
+      activeRepo: null,
 
       getActive: () => {
         const { conversations, activeId } = get();
@@ -227,6 +247,9 @@ export const useSpark = create<SparkState>()(
 
       setSttLang: (v) => set({ sttLang: v }),
       setAutoSpeak: (v) => set({ autoSpeak: v }),
+
+      setHasGithubToken: (v) => set({ hasGithubToken: v }),
+      setActiveRepo: (repo) => set({ activeRepo: repo }),
     }),
     {
       name: "spark-store",
@@ -242,6 +265,8 @@ export const useSpark = create<SparkState>()(
         customSystemPrompt: s.customSystemPrompt,
         sttLang: s.sttLang,
         autoSpeak: s.autoSpeak,
+        hasGithubToken: s.hasGithubToken,
+        activeRepo: s.activeRepo,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();
