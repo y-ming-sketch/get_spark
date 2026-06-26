@@ -7,6 +7,7 @@ import { nanoid } from "nanoid";
 import { useSpark } from "@/lib/store";
 import { buildSystemPrompt, type Message } from "@/lib/types";
 import { streamChat } from "@/lib/chatClient";
+import { attachmentsToContext, type Attachment } from "@/lib/fileContext";
 import { cn } from "@/lib/utils";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
@@ -39,6 +40,7 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -99,7 +101,7 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
   };
 
   const sendMessage = async (text: string, opts?: { regenerate?: boolean }) => {
-    if (!text.trim() && !opts?.regenerate) return;
+    if (!text.trim() && attachments.length === 0 && !opts?.regenerate) return;
 
     let convoId = activeId;
     if (!convoId) {
@@ -116,15 +118,20 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
 
     let userText = text.trim();
     if (!opts?.regenerate) {
+      // Prepend file context to the user message so the assistant sees it
+      const fileContext = attachmentsToContext(attachments);
+      const composed = fileContext + (userText || "");
+
       const userMsg: Message = {
         id: nanoid(8),
         role: "user",
-        content: userText,
+        content: composed,
         createdAt: Date.now(),
       };
       addMessage(convoId, userMsg);
       baseHistory.push(userMsg);
       setInput("");
+      setAttachments([]);
     } else {
       const lastUser = [...baseHistory].reverse().find((m) => m.role === "user");
       if (!lastUser) return;
@@ -261,6 +268,8 @@ export function ChatWindow({ onOpenSettings }: ChatWindowProps) {
         onSubmit={() => sendMessage(input)}
         onStop={handleStop}
         isStreaming={isStreaming}
+        attachments={attachments}
+        onAttachmentsChange={setAttachments}
       />
     </div>
   );

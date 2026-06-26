@@ -7,6 +7,28 @@ import {
   pickLocaleFromAcceptLanguage,
 } from "@/lib/i18n/locales";
 
+// next-intl's AbstractIntlMessages shape — recursive string-or-nested.
+type Msg = { [key: string]: string | Msg };
+
+/** Deep-merge two message trees. Active locale wins; English fills gaps. */
+function mergeMessages(base: Msg, override: Msg): Msg {
+  const result: Msg = { ...base };
+  for (const [key, value] of Object.entries(override)) {
+    const existing = result[key];
+    if (
+      value &&
+      typeof value === "object" &&
+      existing &&
+      typeof existing === "object"
+    ) {
+      result[key] = mergeMessages(existing as Msg, value as Msg);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 /**
  * Per-request locale resolution (server-side).
  *
@@ -15,8 +37,9 @@ import {
  *   2. `Accept-Language` header (best supported match)
  *   3. DEFAULT_LOCALE
  *
- * Messages live in /messages/<locale>.json and are imported dynamically
- * so each route only ships the active locale's strings to the client.
+ * Messages: the active locale's bundle is merged on top of the English bundle
+ * so any newly-added key that hasn't been translated yet falls back to English
+ * instead of crashing the page.
  */
 export default getRequestConfig(async () => {
   const cookieStore = cookies();
@@ -27,12 +50,21 @@ export default getRequestConfig(async () => {
     ? fromCookie
     : pickLocaleFromAcceptLanguage(accept);
 
-  // Dynamic import — webpack bundle-splits per locale automatically.
-  const messages = (
-    await import(`@/messages/${locale}.json`).catch(
-      () => import(`@/messages/${DEFAULT_LOCALE}.json`),
-    )
-  ).default;
+  const englishMessages = (await import(`@/messages/${DEFAULT_LOCALE}.json`))
+    .default as Msg;
 
-  return { locale, messages };
+  if (locale === DEFAULT_LOCALE) {
+    return { locale, messages: englishMessages };
+  }
+
+  const localeMessages = (
+    await import(`@/messages/${locale}.json`).catch(() => ({
+      default: {} as Msg,
+    }))
+  ).default as Msg;
+
+  return {
+    locale,
+    messages: mergeMessages(englishMessages, localeMessages),
+  };
 });
