@@ -1,6 +1,6 @@
 {
   "name": "spark-vscode-webview",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "Spark VS Code webview — Vite build that the VS Code extension hosts.",

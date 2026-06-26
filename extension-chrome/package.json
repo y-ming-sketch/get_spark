@@ -1,6 +1,6 @@
 {
   "name": "spark-chrome-extension",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "Spark — Chrome MV3 side panel reusing the get_spark React core.",

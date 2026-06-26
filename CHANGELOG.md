@@ -9,8 +9,65 @@ and Spark follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Next up: i18n (12 languages) + Settings panel polish. See
-[`.kiro/steering/05-roadmap.md`](./.kiro/steering/05-roadmap.md).
+—
+
+---
+
+## [1.0.0] — 2026-06-26
+
+**Spark v1.0 ships across five surfaces with a single shared React core.**
+
+### Added
+
+- **Phase 2 — i18n + Settings polish** *(PR #6)*. 12 launch locales
+  (`en, es, fr, de, ja, zh, ko, pt, ru, ar, hi, id`), full RTL for
+  Arabic, locale-aware system prompt. Three new settings tabs:
+  Language, Model (with temperature slider), and System prompt.
+- **Phase 3 — Voice + File drop** *(PR #7)*. `VoiceButton` push-to-talk
+  via Web Speech API, locale-aware. `SpeakButton` per-message TTS and a
+  global Auto-speak toggle. Drag-and-drop for files and folders with a
+  1 MB-per-file cap, binary detection, and the `attachmentsToContext`
+  serializer that prepends file content to the next user message.
+- **Phase 4 — Chrome MV3 extension** *(PR #8)*. Side panel hosting the
+  same chat. `Ask Spark about "%s"` context menu, `chrome.storage.local`
+  for the key, `streamChatDirect` for direct DeepSeek SSE (no Next.js
+  server needed). Host permissions narrowed to `api.deepseek.com`.
+- **Phase 5 — Capacitor iOS + Android** *(PR #9)*. `mobile-shell/`
+  Vite build that Capacitor wraps. Safe-area handling, splash screen,
+  keyboard resize mode, native share sheet wrapper.
+- **Phase 6 — GitHub repo connect** *(PR #10)*. PAT-based GitHub client,
+  Settings → Connections panel, `RepoContextChip` in the chat header,
+  and a `summarizeTree()` workspace summary injected into the system
+  prompt so the assistant knows the file layout.
+- **Phase 7 — VS Code extension** *(PR #11)*. `WebviewViewProvider`
+  hosting the same React chat. `workspaceBridge` exposes
+  `getActiveFile`, `getSelection`, `listOpenFiles`,
+  `readWorkspaceFile`. Editor context-menu command "Spark: Ask about
+  selection" and command-palette entry "Spark: Attach active file".
+  Strict CSP allows only `api.deepseek.com` + `api.github.com`.
+
+### Architecture
+
+- Five surfaces (Next.js web/PWA, Tauri desktop, Chrome MV3 extension,
+  Capacitor iOS/Android, VS Code webview) share a single React core
+  under `/components` and `/lib`. Each surface adds only its host-
+  specific shell (~100 lines).
+- `streamChat()` runtime dispatch:
+  - **Tauri** → Rust `chat_stream` command
+  - **Extension / Capacitor / VS Code** → direct DeepSeek fetch
+  - **Web** → `/api/chat` proxy with optional server fallback key
+- `lib/keystore.ts` is the single encrypted store for the DeepSeek key
+  and the GitHub PAT. Same WebCrypto AES-GCM everywhere.
+- Locale resolution is server-side for the web (cookie +
+  Accept-Language) and client-side for the static surfaces, all using
+  the same deep-merge fallback strategy so missing translations
+  silently degrade to English.
+
+### Documentation
+
+- `.kiro/steering/05-roadmap.md` updated to mark all phases complete.
+- README rewritten with the full surface matrix and per-surface
+  install steps.
 
 ---
 

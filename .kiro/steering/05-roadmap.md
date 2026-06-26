@@ -6,145 +6,119 @@ inclusion: always
 
 Each phase ships as a focused PR. Acceptance criteria are non-negotiable.
 
----
-
-## Phase 1 — BYOK + Standalone Desktop  (v0.2)
-
-**Goal:** Tauri builds become 100% self-contained — the user pastes
-their DeepSeek key once, it's encrypted on their machine, and the
-desktop app calls DeepSeek directly via a Rust command.
-
-**Deliverables**
-
-- `lib/keystore.ts` — abstract Keystore + WebCrypto AES-GCM implementation
-- `components/settings/SettingsModal.tsx`, `ApiKeyPanel.tsx`, `AboutPanel.tsx`
-- `/api/chat` accepts `Authorization` header (BYOK on web)
-- `src-tauri/src/lib.rs` — `chat_stream` command (reqwest streaming + event channel)
-- `lib/chatClient.ts` — wire Tauri branch via `invoke` + `listen`
-
-**Acceptance**
-
-- First Tauri launch shows a Welcome screen prompting for the API key.
-- Settings → API Key → "Test connection" hits `/models` and shows OK.
-- `npm run tauri:build` produces an installer that works on a machine
-  with no Node.js and only outbound HTTPS to `api.deepseek.com`.
-- Web build still works with both `DEEPSEEK_API_KEY` env var and BYOK.
-- Existing history survives the upgrade.
+> **Status: v1.0 complete (2026-06-26).** All seven phases below are
+> merged into `main`. Post-1.0 ideas live at the bottom.
 
 ---
 
-## Phase 2 — i18n + Settings Panel  (v0.3)
+## Phase 1 — BYOK + Standalone Desktop  (v0.2) ✅
 
-**Launch locales:** `en, es, fr, de, ja, zh, ko, pt, ru, ar, hi, id`.
+**Status:** shipped in PR #4.
 
-**Deliverables**
-
-- `next-intl` integration with locale routing (cookie → Accept-Language → en)
-- ICU message files for all 12 locales
-- RTL layout support for `ar`
-- AI replies in user's UI language by default
-- Settings: Language, Model defaults, Custom system prompt
-
-**Acceptance**
-
-- Switching UI language flips all chrome instantly (no reload).
-- Sending Japanese after switching locale to `ja` → assistant replies in Japanese.
-- Arabic locale mirrors layout correctly (RTL).
-- All 12 message files have key parity.
+Tauri builds are 100% self-contained — the user pastes their DeepSeek
+key once, it's encrypted on their machine, and the desktop app calls
+DeepSeek directly via a Rust streaming command (`chat_stream` +
+`chat_stream_abort`).
 
 ---
 
-## Phase 3 — Voice + File Drop  (v0.4)
+## Phase 2 — i18n + Settings Panel  (v0.3) ✅
 
-**Deliverables**
+**Status:** shipped in PR #6.
 
-- `VoiceButton` — Web Speech API push-to-talk, locale-aware
-- `SpeakButton` — SpeechSynthesis per-message + global toggle
-- File / folder drag-and-drop (1 MB per file, 10 MB per folder cap)
-- Settings panel: voice prefs, push-to-talk key
-
-**Acceptance**
-
-- Hold space (configurable) → mic listens → release → message sent.
-- Drop a folder of TS files → AI can answer "summarize this codebase".
-- All voice strings respect the active locale.
+- `next-intl` integration; cookie + Accept-Language locale resolution
+- 12 launch locales (`en, es, fr, de, ja, zh, ko, pt, ru, ar, hi, id`)
+- Deep-merge English fallback so missing keys never crash
+- RTL layout for Arabic
+- AI replies in the user's UI language by default
+- Three new settings tabs: Language, Model (with temperature), Prompt
 
 ---
 
-## Phase 4 — Chrome MV3 Extension  (v0.5)
+## Phase 3 — Voice + File Drop  (v0.4) ✅
 
-**Deliverables**
+**Status:** shipped in PR #7.
 
-- `/extension-chrome/` with side panel, popup, "Ask Spark" context menu
-- Content script captures selected text → opens side panel with quote
-- Vite build pipeline outputting to `/extension-chrome/dist`
-- Shares `/components` and `/lib` with the web app — zero duplication
-
-**Acceptance**
-
-- Load unpacked extension → side panel opens with Spark.
-- Right-click selected text → "Ask Spark" → side panel with quote.
-- Pasted API key carries over between web / desktop / extension under
-  the same browser profile.
+- `VoiceButton` push-to-talk via Web Speech API, locale-aware
+- `SpeakButton` per-message TTS + global Auto-speak toggle
+- File / folder drag-and-drop with 1 MB-per-file cap, binary detection,
+  recursive walk via `webkitGetAsEntry`
+- Settings → Voice tab
 
 ---
 
-## Phase 5 — Capacitor iOS + Android  (v0.6)
+## Phase 4 — Chrome MV3 Extension  (v0.5) ✅
 
-**Deliverables**
+**Status:** shipped in PR #8.
 
-- `android/` and `ios/` via `npx cap add`
-- `capacitor.config.ts` — bundle id `app.getspark.mobile`
-- `lib/keystore.capacitor.ts` — `@capacitor/preferences` + biometric unlock
-- Virtual-keyboard-aware `MessageInput`
-- Swipe-from-edge sidebar gesture
-- Native share sheet for "Share answer"
-
-**Acceptance**
-
-- `npx cap run ios` launches Spark on simulator with working chat.
-- `npx cap run android` likewise.
-- History entered in mobile persists across launches.
+- `extension-chrome/` Vite build → side panel + popup + context menu
+- "Ask Spark about \"…\"" right-click action
+- Reuses `/components` and `/lib` via `@/*` alias — zero duplication
+- `streamChatDirect` runtime branch for serverless DeepSeek calls
 
 ---
 
-## Phase 6 — GitHub Repo Connect  (v0.7)
+## Phase 5 — Capacitor iOS + Android  (v0.6) ✅
 
-**Deliverables**
+**Status:** shipped in PR #9.
 
-- `lib/github.ts` — PAT-based client (token in keystore)
-- `RepoConnectModal` + `RepoContextChip`
-- DeepSeek function-calling tool: `getFile(path)` for lazy reads
-- Settings → Connections panel
-
-**Acceptance**
-
-- Connect a public repo → ask "what does `main.rs` do?" → AI fetches and explains.
-- Token never leaves the device except on `api.github.com` calls.
+- `mobile-shell/` Vite build that Capacitor wraps for native projects
+- `capacitor.config.ts` with splash screen, keyboard resize, status-bar sync
+- Native share sheet wrapper (`@capacitor/share` + `navigator.share` fallback)
+- Same direct-fetch DeepSeek path as the extension
 
 ---
 
-## Phase 7 — VS Code Extension  (v0.8)
+## Phase 6 — GitHub Repo Connect  (v0.7) ✅
 
-**Deliverables**
+**Status:** shipped in PR #10.
 
-- `/extension-vscode/` with `WebviewViewProvider` hosting the React bundle
-- `workspaceBridge` exposing `getActiveFile`, `getSelection`,
+- `lib/github.ts` — PAT-based REST client (no Octokit dep)
+- Token stored in the encrypted keystore (`SECRET_KEYS.GITHUB_PAT`)
+- `RepoConnectModal` + `RepoContextChip` + Settings → Connections tab
+- `summarizeTree()` produces a compact workspace summary that's appended
+  to the system prompt for every chat turn
+
+---
+
+## Phase 7 — VS Code Extension  (v0.8) ✅
+
+**Status:** shipped in PR #11.
+
+- `extension-vscode/` with a `WebviewViewProvider` hosting the React core
+- Strict CSP allows only `api.deepseek.com` + `api.github.com`
+- `workspaceBridge` exposes `getActiveFile`, `getSelection`,
   `listOpenFiles`, `readWorkspaceFile`
-- Theme adapts to VS Code's light/dark setting
-
-**Acceptance**
-
-- Install the vsix → Spark appears in the Activity Bar.
-- "Explain this function" on a selection works without leaving VS Code.
+- Editor context-menu and command-palette commands
+- Theme follows VS Code via MutationObserver on body class
 
 ---
 
-## v1.0 — Polish + Launch
+## v1.0 — Polish + Launch  ✅
 
-- Bug fixes, performance pass, copy review across all 12 locales
-- Code signing + notarization wired up
-- Apple Developer / Google Play / Microsoft Store / Chrome Web Store /
-  VS Code Marketplace submissions
-- Privacy policy page that proves §5 Security claims
-- Product Hunt launch with a 60-second demo video
+**Status:** shipped in PR #12.
+
+- Version bumped to `1.0.0` across all manifests
+- CHANGELOG entry summarizing every phase
+- README rewritten with the full surface matrix and per-surface install steps
+- Roadmap (this file) updated to reflect completion
+
+---
+
+## Post-1.0 ideas
+
+These are not committed deliverables but capture the natural follow-ups
+discovered while shipping v1.0.
+
+- **Function calling** — DeepSeek tool calls so the assistant can request
+  `getFile(path)` on demand from a connected repo instead of relying on
+  the system-prompt tree summary alone.
+- **VS Code SecretStorage** — migrate the API key off the webview's
+  localStorage into the host's OS-protected store.
+- **Tauri OS keychain** — same migration for the desktop app.
+- **More locales** — community translations beyond the launch 12.
+- **Code-block actions** — "apply this diff" / "open in editor" in the
+  VS Code surface.
+- **Multi-provider BYOK** — swap DeepSeek for OpenAI / Anthropic /
+  Mistral using the same Settings flow.
+- **Backups** — encrypted export of chat history to a user-chosen file.

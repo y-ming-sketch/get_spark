@@ -1,6 +1,6 @@
 {
   "name": "spark",
-  "version": "0.2.1",
+  "version": "1.0.0",
   "private": true,
   "description": "Spark — an AI chat assistant for code, trends, and everything in between.",
   "scripts": {
