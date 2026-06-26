@@ -1,0 +1,82 @@
+{
+  "name": "spark-vscode",
+  "version": "0.7.0",
+  "private": true,
+  "displayName": "Spark — local-first AI chat",
+  "description": "Spark in your editor. BYOK, encrypted locally, no telemetry. Bring your DeepSeek key and chat with workspace context.",
+  "publisher": "spark",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["AI", "Chat", "Programming Languages", "Other"],
+  "keywords": [
+    "ai",
+    "chat",
+    "deepseek",
+    "byok",
+    "local-first",
+    "privacy",
+    "spark"
+  ],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sparkActivityBar",
+          "title": "Spark",
+          "icon": "media/spark.svg"
+        }
+      ]
+    },
+    "views": {
+      "sparkActivityBar": [
+        {
+          "id": "sparkChat",
+          "name": "Chat",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "spark.open",
+        "title": "Spark: Open chat",
+        "category": "Spark"
+      },
+      {
+        "command": "spark.askAboutSelection",
+        "title": "Spark: Ask about selection",
+        "category": "Spark"
+      },
+      {
+        "command": "spark.attachActiveFile",
+        "title": "Spark: Attach active file to chat",
+        "category": "Spark"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "spark.askAboutSelection",
+          "when": "editorHasSelection",
+          "group": "Spark@1"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build:ext": "tsc -p tsconfig.ext.json && node scripts/copy-webview.cjs",
+    "build:webview": "cd webview && npm run build",
+    "build": "npm run build:webview && npm run build:ext",
+    "watch": "tsc -p tsconfig.ext.json -w",
+    "type-check": "tsc --noEmit -p tsconfig.ext.json && cd webview && npm run type-check",
+    "package": "npx vsce package --no-yarn"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.5.3"
+  }
+}
