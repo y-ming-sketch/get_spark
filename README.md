@@ -2,39 +2,61 @@
 
 > Your AI for code, trends, and everything in between.
 
-Spark is a production-ready AI chat application powered by the **DeepSeek API**.
-It's designed to be a serious assistant for three core domains:
+Spark is a **local-first** AI chat app powered by the **DeepSeek API**.
+Bring your own key, run it on any platform, and your data never leaves
+your device.
 
 - 💻 **Coding** — write, review, debug, and explain code
 - 📈 **SEO & content trends** — what's ranking and rising
 - 👗 **Lifestyle & fashion** — trends by region and city
 
-The UI is inspired by Claude (warm cream backgrounds, generous typography) and
-branded with **Stanford Cardinal Red** (`#8C1515`).
+The UI is inspired by Claude (warm cream backgrounds, generous typography)
+and branded with **Stanford Cardinal Red** (`#8C1515`).
 
-**One codebase. Five platforms.** Spark runs as a web app, installs as a PWA on
-phones and laptops, and ships as a native desktop app via Tauri.
+**One codebase. Five platforms.** Spark runs as a web app, installs as a
+PWA on phones and laptops, and ships as a native desktop app via Tauri.
+
+---
+
+## 🔑 Privacy promise
+
+- We do not collect, store, or transmit your prompts.
+- We do not see your API key. Ever.
+- We do not embed analytics, trackers, or third-party scripts.
+- Chat history lives only on your device. Clear it anytime.
+- Source is open. Verify the claims above in our repo.
+
+The DeepSeek key you paste in **Settings → API key** is encrypted with
+WebCrypto AES-GCM and stored locally:
+
+- **Web / PWA / Chrome ext** → encrypted `localStorage`
+- **Tauri desktop** → app data directory (OS-restricted); future PRs swap
+  this for the OS keychain
+- **Capacitor mobile** → `Preferences` API with biometric unlock (Phase 5)
+- **VS Code extension** → `SecretStorage` (Phase 7)
 
 ---
 
 ## ✨ Features
 
-- Real-time **streaming responses** (Server-Sent Events) from DeepSeek
-- **Multi-conversation** sidebar with rename, delete, and auto-titles
-- **Persistent history** in `localStorage` via Zustand
-- **Markdown rendering** with syntax-highlighted code blocks (highlight.js)
+- **BYOK** — bring your own DeepSeek key; encrypted on this device
+- Real-time **streaming responses** (Server-Sent Events)
+- Multi-conversation sidebar with **rename, delete, auto-titles**
+- **Persistent history** via Zustand + `localStorage`
+- **Markdown rendering** with syntax-highlighted code blocks
 - **Copy** message and **Copy** code buttons
 - **Regenerate** last response, **Stop** generation mid-stream
 - **Model picker** — `deepseek-chat` (fast) or `deepseek-reasoner` (R1)
 - **Light / Dark / System** theme with no flash on load
 - **Mobile-friendly** with collapsible sidebar and safe-area handling
 - **PWA install** — add to home screen on any device
-- **Native desktop** — Tauri shell for Windows, macOS, Linux (~5 MB installer)
+- **Native desktop** — Tauri 2 shell for Windows, macOS, Linux
+- **Standalone desktop builds** — no server required, calls DeepSeek directly from Rust
 - Fully **type-safe** TypeScript, no `any`
 
 ---
 
-## 🚀 Quick Start (Web)
+## 🚀 Quick start (web)
 
 ### 1. Install
 
@@ -42,86 +64,91 @@ phones and laptops, and ships as a native desktop app via Tauri.
 npm install
 ```
 
-### 2. Set your DeepSeek API key
-
-```bash
-cp .env.example .env.local
-# then edit .env.local and paste your key
-```
-
-Get a key at [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys).
-
-### 3. Run
+### 2. Run
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). On first launch
+you'll see a Welcome screen — click **Add your API key**, paste your
+DeepSeek key, and you're chatting.
+
+> No `.env` file required. Spark is BYOK by default.
+
+### Optional: server-side key (legacy / shared deployment)
+
+If you're hosting Spark for a team and don't want every user to paste a
+key, you can still drop a `DEEPSEEK_API_KEY` in `.env.local`:
+
+```bash
+cp .env.example .env.local
+# then edit .env.local
+```
+
+When the server has a key, `/api/chat` falls back to it for users who
+haven't entered their own.
+
+Get a key at [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys).
 
 ---
 
 ## 📱 Install as a PWA
 
-Once Spark is running on a public URL (or `localhost` during dev):
+Once Spark is running on a public URL (or `localhost`):
 
-- **Chrome / Edge (desktop):** click the install icon in the address bar
-- **Safari (iOS):** Share → "Add to Home Screen"
-- **Chrome (Android):** menu → "Install app"
+- **Chrome / Edge (desktop)** → install icon in the address bar
+- **Safari (iOS)** → Share → "Add to Home Screen"
+- **Chrome (Android)** → menu → "Install app"
 
-The service worker pre-caches the app shell so cold-starts are instant and the
-UI works offline (the chat itself still needs network — DeepSeek lives on the
-internet).
-
-Implementation lives in:
-- [`public/manifest.json`](./public/manifest.json) — install metadata
-- [`public/sw.js`](./public/sw.js) — service worker (stale-while-revalidate)
-- [`components/PWAInstaller.tsx`](./components/PWAInstaller.tsx) — registers SW in production
+The service worker pre-caches the app shell for instant cold starts and
+offline-readable history.
 
 ---
 
-## 💻 Run as a Native Desktop App (Tauri)
+## 💻 Run as a native desktop app (Tauri)
 
-Tauri wraps Spark in a tiny Rust-based native shell — about **5 MB installed**
-vs Electron's ~150 MB.
+Tauri wraps Spark in a tiny Rust-based native shell — about **5 MB
+installed** vs Electron's ~150 MB. As of v0.2, the production Tauri
+build is fully **standalone**: it calls DeepSeek directly from Rust,
+so no Node.js or server is required at runtime.
 
-### Prerequisites (one time)
+### Prerequisites (one-time)
 
 1. **Rust** — install via [rustup.rs](https://rustup.rs)
 2. **Platform tools** — follow the
-   [Tauri prerequisites guide](https://tauri.app/start/prerequisites/) for your OS
+   [Tauri prerequisites guide](https://tauri.app/start/prerequisites/)
    (WebView2 on Windows, Xcode CLT on macOS, `webkit2gtk` on Linux)
 
-### Dev
+### Dev mode
 
 ```bash
 npm run tauri:dev
 ```
 
-This boots the Next.js dev server, launches a native Spark window, and points
-it at the dev server. Hot reload works exactly as in the browser.
+This boots the Next.js dev server, launches a native Spark window, and
+points it at the dev server. Hot reload works as in the browser.
 
-### Production build
+### Production build (standalone)
 
 ```bash
 npm run tauri:build
 ```
 
-> ⚠️ **Heads-up:** the current build wraps the Next.js app, which uses an Edge
-> API route for the DeepSeek proxy. The standalone production installer (no
-> server required) lands in the **BYOK PR** — see the roadmap below. Today's
-> `tauri:build` works if you deploy the Next.js backend somewhere (e.g. Vercel)
-> and point the Tauri window at that URL.
-
-Native artifacts land in `src-tauri/target/release/bundle/`:
+Produces installers in `src-tauri/target/release/bundle/`:
 
 - macOS → `.dmg` and `.app`
 - Windows → `.msi` and `.exe`
 - Linux → `.AppImage`, `.deb`, `.rpm`
 
+The bundled app launches with no Node, no localhost, no `.env`. On first
+run it shows the Welcome screen; the user pastes their DeepSeek key into
+Settings → API key, and the app talks straight to `api.deepseek.com` via
+a Rust `chat_stream` command.
+
 ---
 
-## 🎨 Regenerate Icons
+## 🎨 Regenerate icons
 
 All PWA + Tauri icons are produced from a single source by
 [`scripts/generate-icons.py`](./scripts/generate-icons.py):
@@ -135,62 +162,68 @@ This writes the full set into `public/icons/` and `src-tauri/icons/`.
 
 ---
 
-## 🧱 Tech Stack
+## 🧱 Tech stack
 
-| Layer       | Choice                                  |
-|-------------|-----------------------------------------|
-| Framework   | Next.js 14 (App Router, Edge runtime)   |
-| Language    | TypeScript (strict)                     |
-| Styling     | Tailwind CSS + custom CSS variables     |
-| State       | Zustand (with `persist` middleware)     |
-| Markdown    | react-markdown + remark-gfm + highlight.js |
-| Icons       | lucide-react                            |
-| Desktop     | Tauri 2 (Rust)                          |
-| PWA         | Web manifest + service worker (no extra deps) |
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 14 (App Router, Edge runtime) |
+| Language | TypeScript (strict) |
+| Styling | Tailwind CSS + custom CSS variables |
+| State | Zustand (with `persist` middleware) |
+| Markdown | react-markdown + remark-gfm + highlight.js |
+| Icons | lucide-react |
+| Desktop | Tauri 2 (Rust + reqwest streaming) |
+| PWA | Web manifest + service worker (no extra deps) |
+| Crypto | WebCrypto AES-GCM + PBKDF2 |
 | AI Provider | DeepSeek (`deepseek-chat`, `deepseek-reasoner`) |
 
 ---
 
-## 📁 Project Structure
+## 📁 Project structure
 
 ```
 get_spark/
+├── .kiro/
+│   └── steering/                # Vision, system design, security, roadmap
 ├── app/
-│   ├── api/chat/route.ts     # Edge-runtime DeepSeek streaming proxy
-│   ├── globals.css           # Tailwind + CSS variables + safe-area
-│   ├── layout.tsx            # Root layout, metadata, anti-flash script, PWA wiring
-│   └── page.tsx              # Sidebar + chat window
+│   ├── api/chat/route.ts        # BYOK-aware streaming proxy (Edge)
+│   ├── globals.css              # Tailwind + CSS variables + safe-area
+│   ├── layout.tsx               # Metadata, anti-flash script, PWA wiring
+│   └── page.tsx                 # Hosts SettingsModal + KeystoreBootstrap
 ├── components/
-│   ├── chat/                 # ChatSidebar, ChatWindow, MessageBubble,
-│   │                         # MessageInput, MarkdownRenderer, CodeBlock,
-│   │                         # ModelSelector, TypingIndicator
-│   ├── PWAInstaller.tsx      # Service-worker registration
-│   ├── SparkLogo.tsx         # Brand mark (4-point star)
+│   ├── chat/                    # ChatSidebar, ChatWindow, MessageBubble, …
+│   ├── settings/                # SettingsModal, ApiKeyPanel, AboutPanel
+│   ├── ui/Modal.tsx             # Generic modal primitive
+│   ├── KeystoreBootstrap.tsx    # Reconciles keystore with hasApiKey on hydration
+│   ├── PWAInstaller.tsx
+│   ├── SparkLogo.tsx
 │   ├── ThemeProvider.tsx
-│   └── ThemeToggle.tsx
+│   ├── ThemeToggle.tsx
+│   └── Welcome.tsx              # First-launch onboarding
 ├── lib/
-│   ├── chatClient.ts         # Runtime-aware streaming adapter (web today, Tauri next)
-│   ├── store.ts              # Zustand store + persistence
-│   ├── stream.ts             # SSE async-generator parser
-│   ├── types.ts              # Shared types + SYSTEM_PROMPT + MODELS
-│   └── utils.ts              # cn(), formatRelativeTime, deriveTitle
+│   ├── chatClient.ts            # Runtime-aware streamChat() — web vs Tauri
+│   ├── keystore.ts              # WebCrypto AES-GCM encrypted local storage
+│   ├── store.ts                 # Zustand store + persistence
+│   ├── stream.ts                # SSE async-generator parser
+│   ├── types.ts                 # Shared types + SYSTEM_PROMPT + MODELS
+│   ├── utils.ts
+│   └── version.ts               # APP_NAME + APP_VERSION
 ├── public/
-│   ├── manifest.json         # PWA manifest
-│   ├── sw.js                 # Service worker
+│   ├── manifest.json            # PWA manifest
+│   ├── sw.js                    # Service worker
 │   ├── favicon.svg
-│   └── icons/                # PWA icon set (192/384/512/maskable/apple-touch/favicons)
+│   └── icons/                   # PWA icon set
 ├── scripts/
-│   └── generate-icons.py     # One source -> all icons (PWA + Tauri)
+│   └── generate-icons.py        # One source → all icons (PWA + Tauri)
 ├── src-tauri/
-│   ├── Cargo.toml            # Rust deps + release profile tuned for size
-│   ├── build.rs              # Tauri build glue
-│   ├── tauri.conf.json       # Window, bundle, identifier
-│   ├── capabilities/
-│   │   └── default.json      # Tauri 2 ACL for the main window
-│   ├── icons/                # Native icon set (PNG + ICO + ICNS)
+│   ├── Cargo.toml               # Tauri 2 + reqwest + tokio + futures-util
+│   ├── build.rs
+│   ├── tauri.conf.json
+│   ├── capabilities/default.json
+│   ├── icons/                   # Native icon set (PNG + ICO + ICNS)
 │   └── src/
-│       ├── main.rs           # Binary entry — calls into the lib
-│       └── lib.rs            # Tauri::Builder; BYOK chat_stream command lands here
+│       ├── main.rs              # Binary entry — calls into the lib
+│       └── lib.rs               # chat_stream + chat_stream_abort commands
 ├── .env.example
 ├── next.config.js
 ├── package.json
@@ -201,69 +234,50 @@ get_spark/
 
 ---
 
-## 🎨 Brand Tokens
+## 🎨 Brand tokens
 
-| Token            | Value      | Usage                                 |
-|------------------|------------|---------------------------------------|
-| `spark-500`      | `#8C1515`  | Primary (buttons, user bubbles, accent) |
-| `spark-600`      | `#7A1212`  | Primary hover                         |
-| `cream-50`       | `#FAF9F5`  | Page background (light)               |
-| `cream-100`      | `#F5F1E8`  | Panel background, assistant bubbles   |
-| `ink-700` / `800`| dark grays | Dark-mode backgrounds                 |
+| Token | Value | Usage |
+|---|---|---|
+| `spark-500` | `#8C1515` | Primary (buttons, user bubbles, accent) |
+| `spark-600` | `#7A1212` | Primary hover |
+| `cream-50` | `#FAF9F5` | Page background (light) |
+| `cream-100` | `#F5F1E8` | Panel background, assistant bubbles |
+| `ink-700` / `800` | dark grays | Dark-mode backgrounds |
 
 The logo is a 4-point star symbolising **"a spark of insight."**
 
 ---
 
-## 🔒 Security
-
-- The DeepSeek API key is **never** exposed to the browser. All requests are
-  proxied through `/api/chat`, which runs on the server (Edge runtime).
-- No analytics, no tracking, no third-party scripts.
-- Chat history lives in your browser's `localStorage`.
-- The service worker never caches `/api/*` responses.
-
----
-
-## 🚢 Deploy (Web / PWA)
-
-Easiest path is **Vercel**:
-
-1. Push to GitHub.
-2. Import on [vercel.com/new](https://vercel.com/new).
-3. Add the `DEEPSEEK_API_KEY` environment variable.
-4. Deploy.
-
-Once live, the PWA installs from any device that visits the URL.
-
----
-
 ## 🛣️ Roadmap
 
-- [x] **Web** — full chat UX, streaming, markdown, history
-- [x] **PWA** — manifest, service worker, install prompts, safe-area
-- [x] **Desktop (Tauri) — dev mode** — `npm run tauri:dev` opens a native window
-- [ ] **BYOK + Standalone Desktop** — store the user's DeepSeek key locally,
-      move the API call into a Rust `chat_stream` command so production Tauri
-      installers ship as fully self-contained 5 MB apps with no server required
-- [ ] **Capacitor (iOS / Android)** — wrap the same web bundle for the app
-      stores; reuse the BYOK key store from desktop
-- [ ] **In-app settings panel** — key management, model defaults, temperature
+See [`.kiro/steering/05-roadmap.md`](./.kiro/steering/05-roadmap.md) for
+the full plan. Short version:
+
+- [x] **v0.1** — Web chat, streaming, markdown, history
+- [x] **v0.15** — PWA install + Tauri dev shell
+- [x] **v0.2** — BYOK + Standalone Desktop *(this release)*
+- [ ] **v0.3** — i18n (12 languages) + Settings panel polish
+- [ ] **v0.4** — Voice input/output + File drop
+- [ ] **v0.5** — Chrome MV3 extension
+- [ ] **v0.6** — Capacitor (iOS + Android)
+- [ ] **v0.7** — GitHub repo connect
+- [ ] **v0.8** — VS Code extension
+- [ ] **v1.0** — Polish, store submissions, Product Hunt
 
 ---
 
 ## 🛠️ Scripts
 
-| Command            | Purpose                          |
-|--------------------|----------------------------------|
-| `npm run dev`      | Start Next.js dev server         |
-| `npm run build`    | Production build                 |
-| `npm run start`    | Serve production build           |
-| `npm run lint`     | Run ESLint                       |
-| `npm run type-check` | Run `tsc --noEmit`             |
-| `npm run icons`    | Regenerate PWA + Tauri icons     |
-| `npm run tauri:dev`   | Run Spark as a native desktop window |
-| `npm run tauri:build` | Bundle native installers          |
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Start Next.js dev server |
+| `npm run build` | Production build |
+| `npm run start` | Serve production build |
+| `npm run lint` | Run ESLint |
+| `npm run type-check` | Run `tsc --noEmit` |
+| `npm run icons` | Regenerate PWA + Tauri icons |
+| `npm run tauri:dev` | Run Spark as a native desktop window |
+| `npm run tauri:build` | Bundle standalone native installers |
 
 ---
 

@@ -1,6 +1,6 @@
 [package]
 name = "spark"
-version = "0.1.0"
+version = "0.2.0"
 description = "Spark — AI chat for code, trends & style"
 authors = ["Spark"]
 edition = "2021"
@@ -20,6 +20,16 @@ tauri = { version = "2.0", features = [] }
 tauri-plugin-shell = "2.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+# DeepSeek streaming over HTTPS — rustls keeps the bundle portable
+# (no OpenSSL system deps) and tiny.
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "stream",
+    "rustls-tls",
+] }
+futures-util = "0.3"
+tokio = { version = "1", features = ["sync", "rt-multi-thread", "macros"] }
 
 [profile.release]
 panic = "abort"
