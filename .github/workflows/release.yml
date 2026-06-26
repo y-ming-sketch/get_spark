@@ -1,0 +1,92 @@
+name: Release
+
+# Push a tag like v0.2.1 to fire this workflow. It builds signed Tauri
+# installers for macOS, Windows, and Linux and attaches them to a GitHub
+# Release alongside the auto-generated changelog notes.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v0.2.1)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish-tauri:
+    name: ${{ matrix.platform.label }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - label: macOS (universal)
+            os: macos-latest
+            args: "--target universal-apple-darwin"
+          - label: Windows (x86_64)
+            os: windows-latest
+            args: ""
+          - label: Linux (x86_64)
+            os: ubuntu-latest
+            args: ""
+
+    runs-on: ${{ matrix.platform.os }}
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Rust (stable + macOS universal targets)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Install Tauri system deps (Linux only)
+        if: matrix.platform.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install npm deps
+        run: npm ci --no-audit --no-fund
+
+      - name: Build and publish
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # ── macOS signing + notarization (set as repo secrets) ──
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # ── Windows code-signing (optional) ──
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        with:
+          tagName: ${{ github.event.inputs.tag || github.ref_name }}
+          releaseName: "Spark ${{ github.event.inputs.tag || github.ref_name }}"
+          releaseBody: |
+            Auto-generated release. See [CHANGELOG.md](./CHANGELOG.md) for full notes.
+
+            Installers below are produced by `tauri-apps/tauri-action` on
+            macOS (universal), Windows (x86_64), and Linux (x86_64).
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.platform.args }}

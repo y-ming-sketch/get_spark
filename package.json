@@ -1,6 +1,6 @@
 {
   "name": "spark",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Spark — an AI chat assistant for code, trends, and everything in between.",
   "scripts": {
@@ -10,6 +10,7 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "icons": "python3 scripts/generate-icons.py",
+    "og": "python3 scripts/generate-og.py",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
